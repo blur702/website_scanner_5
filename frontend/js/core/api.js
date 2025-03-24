@@ -99,9 +99,16 @@ const api = {
     try {
       const response = await fetch(api.baseUrl + url, {  // Use the baseUrl
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        let errorData = {};
+        try {
+          errorData = await response.json();
+        } catch (e) {
+        }
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
       return await response.json();

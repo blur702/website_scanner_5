@@ -69,7 +69,7 @@ class ScreenshotManager:
                 viewport_width=viewport_width,
                 viewport_height=viewport_height,
                 path=path,
-                thumbnail_path="",
+                thumbnail_path=thumbnail_path,
                 filesize=0,
                 created_at=datetime.now(),
                 capture_success=capture_success,
@@ -93,7 +93,7 @@ class ScreenshotManager:
                 viewport_width=viewport_width,
                 viewport_height=viewport_height,
                 path=path,
-                thumbnail_path="",  # Added empty string for thumbnail_path
+                thumbnail_path=thumbnail_path if 'thumbnail_path' in locals() else "",
                 created_at=datetime.now(),
                 capture_success=False,
                 error_message=str(e),
@@ -148,7 +148,9 @@ class ScreenshotManager:
             screenshot_id=screenshot_id,
             validation_id=validation_id,
             highlight_coordinates=coordinates,
-            highlight_color=color
+            highlight_color=color,
+            element_selector="",
+            element_snippet=""
         )
 
         self.db.add(mapping)

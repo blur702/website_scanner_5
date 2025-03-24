@@ -107,7 +107,6 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 @app.on_event("startup")
-# Fixed: Removed duplicate WebSocket route declarations
 async def startup_event():
     logger.info(f"Starting Website Checker API on {settings.API_HOST}:{settings.API_PORT}")
     # Create necessary directories

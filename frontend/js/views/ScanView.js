@@ -296,7 +296,7 @@ class ScanView {
             const scanData = {
                 url: url,
                 mode: mode,
-                config: config,
+                config: { config: config },
                 name: `${mode.charAt(0).toUpperCase() + mode.slice(1)} scan of ${new URL(url).hostname}`
             };
             
