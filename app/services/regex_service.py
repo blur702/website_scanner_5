@@ -72,13 +72,14 @@ class RegexService:
         logger.debug(f"Returning {len(items)} patterns (page {page} of {(total + limit - 1) // limit if total > 0 else 1})")
         
         return RegexPatternsResponse(
-            items=items,
-            total=total,
-            page=page,
-            limit=limit
+            items=items,  # List of patterns
+            total=total,  # Total count for pagination
+            page=page,    # Current page
+            limit=limit   # Items per page
         )
     
-    async def save_pattern(self, pattern: RegexPattern) -> RegexPatternResponse:
+    async def save_pattern(self, pattern: RegexPattern, user_id: Optional[str] = None) -> RegexPatternResponse:
+        """Added user_id parameter for future user-specific patterns"""
         """
         Save a new regex pattern.
         

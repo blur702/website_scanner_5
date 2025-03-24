@@ -325,14 +325,20 @@ class ScanService:
             ).first()
             
             resource_id = resource.id if resource else None
-            
+
+            # Ensure screenshots directory exists
+            screenshots_dir = os.path.join(scan.cache_path, "screenshots")
+            if not os.path.exists(screenshots_dir):
+                os.makedirs(screenshots_dir)
+
+            # Create screenshot record
             screenshot = Screenshot(
                 resource_id=resource_id,
                 type="full_page",
                 viewport_width=1920,
                 viewport_height=1080,
-                path=os.path.join(scan.cache_path, "screenshots", f"page{i}.png"),
-                thumbnail_path=os.path.join(scan.cache_path, "screenshots", f"page{i}_thumb.png"),
+                path=os.path.join(screenshots_dir, f"page{i}.png"),
+                thumbnail_path=os.path.join(screenshots_dir, f"page{i}_thumb.png"),
                 created_at=datetime.now(),
                 filesize=500 * 1024,  # 500KB per screenshot
                 capture_success=True

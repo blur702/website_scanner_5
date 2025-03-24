@@ -7,29 +7,29 @@
  * Responsible for initializing the application and setting up routes
  */
 window.app = {
-  init: function() {
-    console.log('App initialized');
-    
-    // Create the main layout and navigation structure
-    Navigation.renderNavigation();
-    
-    // Now that the DOM elements exist, initialize components
-    Navigation.init();
-    
-    // Initialize the default view
-    HomeView.init();
+    init: function() {
+        console.log('App initialized');
 
-    // Set up routes
-    router.addRoute('/', HomeView.init);
-    router.addRoute('/scan', ScanView.init);
-    router.addRoute('/results', ResultsView.init);
-    router.addRoute('/report', ReportView.init);
-    router.addRoute('/search', SearchView.init);
-    router.addRoute('/settings', SettingsView.init);
+        // Create the main layout and navigation structure
+        Navigation.renderNavigation();
 
-    // Handle the current route
-    router.handleRoute();
-  }
+        // Now that the DOM elements exist, initialize components
+        Navigation.init();
+
+        // Initialize the default view
+        HomeView.init();
+
+        // Set up routes
+        router.addRoute('/', HomeView.init);
+        router.addRoute('/scan', ScanView.init);
+        router.addRoute('/results', ResultsView.init);
+        router.addRoute('/report', ReportView.init);
+        router.addRoute('/search', SearchView.init);
+        router.addRoute('/settings', SettingsView.init);
+
+        // Handle the current route
+        router.handleRoute();
+    }
 };
 
 // The initialization is now handled in index.html
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (window.Dropdown) Dropdown.init();
     if (window.Notification) Notification.init();
     if (window.router) router.init(); // Initialize router
-    
+
     // Define routes
     router.addRoute('/', function() {
         document.getElementById('view-container').innerHTML = '<h1>Welcome to Website Checker</h1>';
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error("HomeView component not loaded");
         }
     });
-    
+
     router.addRoute('/scan', function() {
         document.getElementById('view-container').innerHTML = '<h1>New Scan</h1>';
         if (window.ScanView) {
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error("ScanView component not loaded");
         }
     });
-    
+
     router.addRoute('/results', function() {
         document.getElementById('view-container').innerHTML = '<h1>Results</h1>';
         if (window.ResultsView) {
@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error("ResultsView component not loaded");
         }
     });
-    
+
     router.addRoute('/search', function() {
         document.getElementById('view-container').innerHTML = '<h1>Search</h1>';
         if (window.SearchView) {
@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error("SearchView component not loaded");
         }
     });
-    
+
     // Add database browser route
     router.addRoute('/db-browser', function() {
         document.getElementById('view-container').innerHTML = '<h1>Database Browser</h1>';
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error("Error loading DbBrowserView:", error);
             });
     });
-    
+
     router.addRoute('/settings', function() {
         document.getElementById('view-container').innerHTML = '<h1>Settings</h1>';
         if (window.SettingsView) {
@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error("SettingsView component not loaded");
         }
     });
-    
+
     // Add 404 route handler
     router.add404Handler(function() {
         document.getElementById('view-container').innerHTML = `
@@ -122,11 +122,11 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
     });
-    
+
     // Initialize navigation
     if (window.Navigation) {
         Navigation.init();
     }
-    
+
     router.handleRoute();
 });
