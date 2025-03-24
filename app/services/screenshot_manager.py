@@ -69,9 +69,9 @@ class ScreenshotManager:
                 viewport_width=viewport_width,
                 viewport_height=viewport_height,
                 path=path,
-                thumbnail_path=thumbnail_path,
+                thumbnail_path="",
+                filesize=0,
                 created_at=datetime.now(),
-                filesize=filesize,
                 capture_success=capture_success,
                 error_message=error_message
             )
@@ -142,16 +142,6 @@ class ScreenshotManager:
             ScreenshotIssueMapping object
         """
         logger.info(f"Creating issue mapping for screenshot {screenshot_id}, validation {validation_id}")
-
-        # Check if screenshot exists
-        screenshot = self.db.query(Screenshot).filter(Screenshot.id == screenshot_id).first()
-        if not screenshot:
-            raise NotFoundException("Screenshot", str(screenshot_id))
-
-        # Check if validation exists
-        validation = self.db.query(Validation).filter(Validation.id == validation_id).first()
-        if not validation:
-            raise NotFoundException("Validation", str(validation_id))
 
         # Create mapping record
         mapping = ScreenshotIssueMapping(

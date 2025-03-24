@@ -14,14 +14,14 @@ const Form = {
   },
   validate: (form) => {
     let isValid = true;
-    
+
     // Find all required fields
     form.querySelectorAll('[required]').forEach(field => {
       if (!field.value.trim()) {
         isValid = false;
         // Add error class
         field.classList.add('form-error');
-        
+
         // Create or update error message
         let errorMsg = field.parentNode.querySelector('.error-message');
         if (!errorMsg) {
@@ -38,8 +38,8 @@ const Form = {
         if (errorMsg) errorMsg.remove();
       }
     });
-    
-    return true;
+
+    return isValid;
   },
   submit: async (form) => {
     const formData = new FormData(form);
@@ -48,10 +48,9 @@ const Form = {
       data[key] = value;
     });
 
-    // TODO: Implement AJAX form submission
     const formAction = form.getAttribute('action') || '/api/form';
     const formMethod = form.getAttribute('method') || 'POST';
-    
+
     try {
       const response = await fetch(formAction, {
         method: formMethod,
@@ -60,7 +59,7 @@ const Form = {
         },
         body: JSON.stringify(data)
       });
-      
+
       if (response.ok) {
         if (window.Notification) Notification.show('Form submitted successfully', 'success');
         form.reset();
