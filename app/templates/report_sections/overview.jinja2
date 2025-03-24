@@ -1,0 +1,52 @@
+<section id="overview-section" class="section">
+    <h2>Overview</h2>
+    
+    <div class="meta-info">
+        <div class="meta-grid">
+            <div class="meta-item">
+                <div class="meta-label">URL</div>
+                <div class="meta-value">{{ scan.original_url }}</div>
+            </div>
+            
+            <div class="meta-item">
+                <div class="meta-label">Scan Mode</div>
+                <div class="meta-value">{{ scan.scan_mode }}</div>
+            </div>
+            
+            <div class="meta-item">
+                <div class="meta-label">Start Time</div>
+                <div class="meta-value">{{ data.overview.start_time.strftime('%Y-%m-%d %H:%M:%S') }}</div>
+            </div>
+            
+            <div class="meta-item">
+                <div class="meta-label">End Time</div>
+                <div class="meta-value">{{ data.overview.end_time.strftime('%Y-%m-%d %H:%M:%S') if data.overview.end_time else 'In Progress' }}</div>
+            </div>
+            
+            <div class="meta-item">
+                <div class="meta-label">Duration</div>
+                <div class="meta-value">{{ data.overview.duration | round }}s</div>
+            </div>
+            
+            <div class="meta-item">
+                <div class="meta-label">Status</div>
+                <div class="meta-value">{{ scan.status }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="summary-grid">
+        <div class="summary-card">
+            <div class="summary-value">{{ data.overview.page_count }}</div>
+            <h3>Pages Processed</h3>
+        </div>
+        
+        <div class="summary-card">
+            <div class="summary-value">{{ data.overview.resource_count }}</div>
+            <h3>Resources</h3>
+        </div>
+        
+        <div class="summary-card">
+            <div class="summary-value">{{ (data.overview.total_download_size / 1024 / 1024) | round(2) }}</div>
+            <h3>Total Size (MB)</h3>
+        </div>

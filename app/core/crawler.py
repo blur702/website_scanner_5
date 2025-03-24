@@ -157,4 +157,16 @@ class Crawler:
                     resolved.pop()
             else:
                 resolved.append(segment)
+        
+        # Handle duplicate slashes
+        normalized_path = '/'.join(resolved)
+        while '//' in normalized_path:
+            normalized_path = normalized_path.replace('//', '/')
+        
+        # Ensure leading slash
+        if normalized_path and not normalized_path.startswith('/'):
+            normalized_path = '/' + normalized_path
+        
+        return normalized_path
 
+    # Add the remaining methods for URL extraction, robot.txt handling, etc.
