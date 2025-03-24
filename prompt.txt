@@ -1,0 +1,1501 @@
+# Website Downloader, Scanner, Validator and Packager Tool - Exhaustive Development Specification
+
+## Project Vision and Scope
+
+Create a professional-grade, OS-agnostic web application that enables users to download, scan, validate, and package websites for offline browsing. This Single Page Application (SPA) will feature multiple operational modes, comprehensive validation capabilities, configurable settings, and detailed reporting. The application must work across all major operating systems as it will be browser-based, and should handle a wide range of website sizes, from small personal sites to large organizational websites.
+
+The fundamental purpose of this tool is to create high-quality offline versions of websites that function properly without an internet connection, while simultaneously providing detailed analysis of potential issues on those websites. This dual functionality makes it valuable for web archivists, compliance testers, content creators, and website administrators who need to audit and preserve web content.
+
+## Core Operational Modes
+
+The application must support five distinct operational modes, each with specific behaviors:
+
+1. **Full Website Scan**:
+   - Perform complete crawling of an entire website
+   - Follow all internal links recursively up to configurable depth limit
+   - Download all resources within the defined domain boundaries
+   - Apply all configured validation tests to each downloaded page
+   - Generate comprehensive reports on all findings
+
+2. **Design Mode**:
+   - Download only a single page and its direct resources (CSS, JS, images)
+   - Consolidate CSS into a single file for easier editing
+   - Preserve original HTML structure
+   - Do not crawl beyond the initial page
+   - Purpose: enable offline CSS customization and design tweaking
+
+3. **Single Page Full Process**:
+   - Process only the provided URL and its direct resources
+   - No recursive crawling beyond the initial page
+   - Apply full validation suite to just this single page
+   - Generate detailed report for this specific page
+   - Purpose: quick check of individual pages without full site scan
+
+4. **Path Restricted Scan**:
+   - Limit crawling to URLs matching specific path patterns
+   - Example: only crawl /blog/* within a website
+   - Apply all validation tests to pages within the path restriction
+   - Respect all other crawler settings (depth, domain restrictions)
+   - Purpose: focus analysis on specific sections of a website
+
+5. **Regex Filtered Scan**:
+   - Download only pages matching custom regular expression patterns
+   - Support both inclusive patterns (only download matches) and exclusive patterns (exclude matches)
+   - Allow complex filtering beyond simple path matching
+   - Apply all validation tests to matching pages
+   - Purpose: advanced filtering for specific content patterns
+
+The mode selection must be prominently displayed in the UI, with appropriate contextual settings appearing when each mode is selected. Mode-specific settings should be clearly distinguished from global settings.
+
+## Technical Architecture
+
+The application will be built as a true Single Page Application (SPA) with a complete separation between frontend and backend components. The frontend and backend will communicate exclusively via RESTful API endpoints for data operations and WebSockets for real-time progress updates.
+
+### Backend Architecture
+
+#### Core Framework and Technologies
+- **Python 3.9+**: The primary backend language
+- **Flask**: Web framework for RESTful API development with proper API versioning and error handling
+- **Celery**: Task queue for processing long-running operations asynchronously
+- **Redis**: Message broker for Celery and temporary data storage
+- **SQLite**: Persistent database with proper transaction handling and migration support
+- **Playwright**: Headless browser automation for JavaScript rendering, DOM manipulation, and screenshot capture
+- **BeautifulSoup/lxml**: HTML/XML parsing and manipulation
+- **NLTK/spaCy**: Natural language processing for sentiment analysis and content categorization
+- **Hunspell/PyEnchant**: Spell checking in multiple languages with custom dictionaries
+
+#### Multi-Threading Implementation
+- Backend must use proper multi-threading to enable concurrent operations
+- Implement a configurable thread pool with adaptive sizing based on CPU cores
+- Thread pool should scale from 1 to 16 threads based on available system resources
+- Employ thread safety mechanisms (locks, semaphores) to prevent race conditions
+- Implement a task queue with prioritization for resource processing
+
+#### Modular Code Organization
+The backend must be organized into the following discrete modules, each with clear responsibilities and interfaces:
+
+1. **crawler.py**:
+   - Discover URLs based on selected operation mode
+   - Respect robots.txt and domain boundaries
+   - Track crawl state and depth
+   - Identify duplicate URLs
+   - Detect common elements across pages
+
+2. **downloader.py**:
+   - Fetch discovered resources
+   - Handle various content types appropriately
+   - Manage rate limiting and concurrent connections
+   - Implement retry logic for transient errors
+   - Track download progress and status
+
+3. **validator.py**:
+   - Execute configurable validation tests
+   - Generate validation reports
+   - Capture screenshots of issues
+   - Organize and categorize findings
+   - Implement pluggable validation architecture
+
+4. **link_modifier.py**:
+   - Rewrite links for offline browsing
+   - Process HTML href attributes
+   - Process CSS url() references
+   - Process JavaScript URLs
+   - Handle special cases like base tags
+
+5. **css_processor.py**:
+   - Analyze and process CSS files
+   - Consolidate multiple stylesheets
+   - Identify unused selectors
+   - Normalize paths in url() references
+   - Extract and process inline styles
+
+6. **packager.py**:
+   - Create compressed archives of processed content
+   - Organize files maintaining site structure
+   - Include generated reports
+   - Create package navigator HTML
+   - Implement multiple compression options
+
+7. **cache_manager.py**:
+   - Handle temporary file storage
+   - Implement efficient caching strategies
+   - Manage disk space usage
+   - Set up UUID-based directory structure
+   - Handle cleanup of stale data
+
+8. **task_manager.py**:
+   - Coordinate asynchronous tasks
+   - Manage job queues and priorities
+   - Track task dependencies
+   - Handle task failures gracefully
+   - Provide status updates to frontend
+
+9. **report_generator.py**:
+   - Create HTML, PDF, and CSV reports
+   - Format validation results
+   - Generate visualizations
+   - Compile statistics
+   - Apply templating for consistent output
+
+10. **screenshot_manager.py**:
+    - Capture full-page screenshots
+    - Create screenshots of specific elements
+    - Generate thumbnails
+    - Highlight issue areas
+    - Optimize image storage
+
+### Frontend Architecture
+
+#### Core Framework and Technologies
+- **React 18+**: Frontend library with functional components and hooks
+- **TypeScript 4.5+**: For type safety and improved developer experience
+- **Redux Toolkit**: State management with proper action and reducer organization
+- **Material-UI/Tailwind CSS**: UI framework for responsive design
+- **WebSocket**: For real-time updates from the backend
+- **React Router**: For SPA navigation
+- **React Query**: For data fetching and caching
+- **Chart.js/D3.js**: For data visualization and reporting
+
+#### Responsive Design Requirements
+- The frontend must be fully responsive, working on screens from 320px to 4K
+- Implementation of mobile-first design principles
+- Appropriate breakpoints at 576px, 768px, 992px, and 1200px
+- Touch-friendly controls for mobile devices
+- Keyboard accessibility for all interactive elements
+
+#### Component Structure
+The frontend will be organized into the following component hierarchy:
+
+1. **Core Components**:
+   - App container with global state
+   - Navigation/routing system
+   - Authentication (if required)
+   - Error boundary components
+   - Toast notification system
+
+2. **Operational Mode Components**:
+   - Mode selection interface
+   - Mode-specific configuration panels
+   - URL input with validation
+   - Advanced settings accordion
+
+3. **Process Control Components**:
+   - Start/stop/pause controls
+   - Progress indicators
+   - Real-time status display
+   - Log viewer with filtering
+
+4. **Results and Reporting Components**:
+   - Validation result browsers
+   - Screenshot viewers with issue highlighting
+   - Report configuration and export
+   - Data visualization dashboards
+
+5. **History and Management Components**:
+   - Past scan listing with filtering
+   - Scan comparison tools
+   - Configuration management
+   - Batch operation interfaces
+
+## Database Schema
+
+The application will use SQLite for data persistence with the following detailed schema:
+
+### Metadata Table
+- `uuid`: TEXT PRIMARY KEY - Unique identifier for each scan session
+- `original_url`: TEXT - Starting URL as entered by user
+- `normalized_url`: TEXT - URL with protocol prefix and normalization applied
+- `scan_mode`: TEXT - Selected operational mode (full, design, single, path, regex)
+- `url_regex_filter`: TEXT - Regular expression pattern for URL filtering (if applicable)
+- `regex_is_inclusive`: BOOLEAN - Whether regex is for including (TRUE) or excluding (FALSE) URLs
+- `start_time`: TIMESTAMP - When the scan was initiated
+- `end_time`: TIMESTAMP - When the scan completed or failed
+- `status`: TEXT - Current scan status (queued, running, paused, completed, failed, canceled)
+- `progress`: REAL - Overall completion percentage (0-100)
+- `config`: JSON - Complete configuration settings used for this scan
+- `stats`: JSON - Comprehensive statistics about the scan (pages, resources, issues)
+- `total_download_size`: INTEGER - Total size in bytes of all downloaded resources
+- `resource_count`: INTEGER - Total number of resources discovered
+- `downloaded_count`: INTEGER - Number of resources successfully downloaded
+- `page_count`: INTEGER - Number of HTML pages processed
+- `external_link_count`: INTEGER - Number of external links found
+- `external_link_errors`: INTEGER - Number of broken external links
+- `cache_path`: TEXT - File system path to cached resources for this scan
+- `package_path`: TEXT - File system path to generated package archive
+- `error`: TEXT - Detailed error message if scan failed
+
+### Resource Table
+- `id`: INTEGER PRIMARY KEY AUTOINCREMENT
+- `uuid`: TEXT REFERENCES metadata(uuid) - Associated scan session
+- `original_url`: TEXT - Source URL as entered or discovered
+- `normalized_url`: TEXT - URL with proper protocol prefix and normalization
+- `resource_type`: TEXT - Content type category (html, css, js, image, font, document, other)
+- `mime_type`: TEXT - Actual MIME type from HTTP headers
+- `is_external`: BOOLEAN - Flag indicating if resource is from external domain
+- `domain`: TEXT - The domain of the resource
+- `path`: TEXT - The path component of the URL
+- `depth`: INTEGER - Link depth from starting URL
+- `download_status`: TEXT - 'downloaded', 'skipped', 'failed'
+- `status_code`: INTEGER - HTTP status code
+- `local_path`: TEXT - Path to file within cache directory
+- `parent_resource_id`: INTEGER - ID of resource that linked to this one
+- `link_source`: TEXT - How this resource was discovered (href, src, css, js, etc.)
+- `error_message`: TEXT - Error details if download failed
+- `download_time`: TIMESTAMP - When the resource was downloaded
+- `download_duration_ms`: INTEGER - How long the download took
+- `content_length`: INTEGER - Size in bytes
+- `text_content`: TEXT - Extracted plain text (for HTML pages only, used for searching)
+- `screenshot_path`: TEXT - Path to full page screenshot
+- `hash`: TEXT - Content hash for deduplication
+
+### Regex Filter Table
+- `id`: INTEGER PRIMARY KEY AUTOINCREMENT
+- `name`: TEXT - Descriptive name for the saved pattern
+- `pattern`: TEXT - The regular expression pattern
+- `description`: TEXT - User-friendly explanation of what the pattern matches
+- `is_inclusive`: BOOLEAN - Whether pattern is for including (TRUE) or excluding (FALSE) URLs
+- `created_at`: TIMESTAMP - When the pattern was created
+- `last_used`: TIMESTAMP - When the pattern was last used
+- `usage_count`: INTEGER - Number of times the pattern has been used
+- `example_matches`: TEXT - JSON array with example URLs that match
+
+### External Link Table
+- `id`: INTEGER PRIMARY KEY AUTOINCREMENT
+- `resource_id`: INTEGER REFERENCES resources(id) - Associated resource containing the link
+- `uuid`: TEXT REFERENCES metadata(uuid) - Associated scan session
+- `url`: TEXT - External URL being linked to
+- `domain`: TEXT - Domain of the external URL
+- `link_text`: TEXT - Anchor text or alt text of the link
+- `context`: TEXT - Surrounding content for context
+- `status_code`: INTEGER - HTTP status code from checking the link
+- `response_time_ms`: INTEGER - Response time in milliseconds
+- `check_time`: TIMESTAMP - When the link was last checked
+- `is_working`: BOOLEAN - Whether the link is working (200-299 status)
+- `error_message`: TEXT - Error details if link check failed
+- `severity`: TEXT - Severity level of any issues (error, warning, info)
+- `redirect_url`: TEXT - Final URL after following redirects
+- `content_type`: TEXT - Content type of the target resource
+- `retry_count`: INTEGER - Number of retry attempts made
+
+### Screenshot Table
+- `id`: INTEGER PRIMARY KEY AUTOINCREMENT
+- `resource_id`: INTEGER REFERENCES resources(id) - Associated resource
+- `type`: TEXT - Screenshot type (full_page, element, highlight)
+- `viewport_width`: INTEGER - Capture width in pixels
+- `viewport_height`: INTEGER - Capture height in pixels
+- `path`: TEXT - File system path to the screenshot
+- `thumbnail_path`: TEXT - Path to generated thumbnail (200x150px)
+- `created_at`: TIMESTAMP - When the screenshot was captured
+- `filesize`: INTEGER - Size of screenshot file in bytes
+- `capture_success`: BOOLEAN - Whether capture was successful
+- `error_message`: TEXT - Error details if capture failed
+
+### Screenshot_Issue_Mapping
+- `id`: INTEGER PRIMARY KEY AUTOINCREMENT
+- `screenshot_id`: INTEGER REFERENCES screenshots(id) - Associated screenshot
+- `validation_id`: INTEGER REFERENCES validation(id) - Associated validation issue
+- `highlight_coordinates`: TEXT - JSON with x,y,width,height of highlight area
+- `highlight_color`: TEXT - CSS color code for severity indication
+- `element_selector`: TEXT - CSS selector of highlighted element
+- `element_snippet`: TEXT - HTML code of the issue element
+- `order_in_page`: INTEGER - Order of this issue on the page
+
+### Sentiment Table
+- `id`: INTEGER PRIMARY KEY AUTOINCREMENT
+- `resource_id`: INTEGER REFERENCES resources(id) - Associated resource
+- `sentiment_score`: REAL - Numerical sentiment score (-1.0 to 1.0)
+- `sentiment_label`: TEXT - Categorical sentiment (very negative, negative, neutral, positive, very positive)
+- `confidence`: REAL - Confidence level of the sentiment analysis (0.0-1.0)
+- `subjectivity`: REAL - Subjectivity score (0.0=objective to 1.0=subjective)
+- `dominant_emotions`: TEXT - JSON array of detected emotions and their scores
+- `keywords`: TEXT - JSON array of extracted sentiment-bearing keywords
+- `analyzed_text_length`: INTEGER - Character count of analyzed text
+
+### Search Index Table
+- `id`: INTEGER PRIMARY KEY AUTOINCREMENT
+- `resource_id`: INTEGER REFERENCES resources(id) - Associated resource
+- `element_type`: TEXT - Type of indexed element (text, class, id, tag)
+- `element_value`: TEXT - Value of the indexed element
+- `context`: TEXT - Surrounding content for context
+- `location`: TEXT - XPath or CSS selector to the element location
+- `frequency`: INTEGER - Number of occurrences within resource
+
+### Validation Table
+- `id`: INTEGER PRIMARY KEY AUTOINCREMENT
+- `uuid`: TEXT REFERENCES metadata(uuid) - Associated scan session
+- `resource_id`: INTEGER REFERENCES resources(id) - Associated resource
+- `test_group`: TEXT - Category of the test (WCAG, HTML, Links, etc.)
+- `test_id`: TEXT - Specific identifier of the test
+- `test_name`: TEXT - Human-readable name of the test
+- `severity`: TEXT - Issue severity (error, warning, info)
+- `description`: TEXT - Detailed explanation of the issue
+- `element_selector`: TEXT - CSS selector or XPath to the problem element
+- `line_number`: INTEGER - Line number in the source code
+- `column_number`: INTEGER - Column number in the source code
+- `source_snippet`: TEXT - Excerpt of source code containing the issue
+- `screenshot_id`: INTEGER REFERENCES screenshots(id) - Associated screenshot
+- `remediation`: TEXT - Suggested fix for the issue
+- `detected_at`: TIMESTAMP - When the issue was detected
+
+## Processing Architecture
+
+### URL Normalization Process
+
+URL normalization must be performed automatically and silently on all user-provided URLs. The process must follow these exact steps:
+
+1. **Input Validation**:
+   - Accept any string as input without showing errors to user
+   - Trim leading and trailing whitespace
+   - Remove unsafe characters (spaces, non-ASCII chars unless properly encoded)
+
+2. **Protocol Handling**:
+   - Check if URL begins with "http://" or "https://"
+   - If no protocol is present, automatically prepend "https://"
+   - Attempt connection with HTTPS first
+   - If HTTPS connection fails (timeout, SSL error), silently retry with "http://"
+   - Do not display any error messages about this process to the user
+
+3. **Domain Normalization**:
+   - Convert domain to lowercase
+   - Handle internationalized domain names (IDN) properly
+   - Resolve IP addresses to hostnames when possible
+   - Handle URLs with port specifications correctly
+
+4. **Path Normalization**:
+   - Resolve relative paths (../, ./)
+   - Remove default ports (e.g., :80 for HTTP, :443 for HTTPS)
+   - Handle duplicate slashes
+   - Decode percent-encoded unreserved characters
+
+5. **Storage**:
+   - Store both original user input (`original_url`) and normalized URL (`normalized_url`)
+   - Use normalized URL for all internal processing and database queries
+   - Display original URL to user in the interface
+   - Log normalization process in debug logs only (not visible to user)
+
+### Parallel Processing Implementation
+
+The application must implement a parallel processing pipeline with the following characteristics:
+
+1. **Pipeline Stages**:
+   - Stage 1: URL discovery and resource identification
+   - Stage 2: Resource downloading and basic validation
+   - Stage 3: Comprehensive validation and analysis
+   - Stage 4: Report generation and packaging
+
+2. **Concurrency Model**:
+   - Each stage must operate simultaneously without waiting for previous stages to complete
+   - Resources flow through the pipeline individually rather than in batches
+   - Stage 1 (discovery) should stay ahead of Stage 2 (downloading) by configurable buffer
+   - Validation (Stage 3) can begin on individual resources as soon as they're downloaded
+
+3. **Resource Management**:
+   - Implement configurable concurrency limits for each stage
+   - Default to 3 concurrent downloads, adjustable from 1-10
+   - Automatically throttle if target server shows signs of overload
+   - Prioritize HTML resources before CSS, JS, and then other resources
+   - Implement streaming download for large files to minimize memory usage
+
+### External Resource Handling
+
+The application must handle external resources (those from domains other than the main website) according to these specific rules:
+
+1. **Domain Restriction**:
+   - By default, only download resources from the main domain
+   - Preserve links to external resources in HTML without modification
+   - Allow configurable inclusion of specific third-party domains
+   - Create a separate report section listing all external resources
+
+2. **Link Preservation**:
+   - For external resources that aren't downloaded, preserve the original URLs
+   - Add visual indicators in packaged content to show external links
+   - Optionally add warning attributes (data-external="true") to external links
+   - Include count of external dependencies in reports
+
+## Detailed Feature Requirements
+
+### Crawler Module Functionality
+
+The crawler module must implement these specific capabilities:
+
+1. **URL Discovery Methods**:
+   - Parse HTML for links (a href, link, script, img, iframe, etc.)
+   - Extract URLs from CSS (url(), @import)
+   - Basic extraction from JavaScript (detect URL strings)
+   - Handle both absolute and relative URLs properly
+
+2. **Configurability**:
+   - Maximum crawl depth: 0-10, default 3
+   - Follow/ignore robots.txt: configurable, default respect
+   - Follow/ignore nofollow attributes: configurable, default respect
+   - Domain/subdomain handling: main domain only, include all subdomains, custom list
+   - Include/exclude path patterns with wildcard support
+
+3. **URL Filtering**:
+   - Path-based restrictions to include or exclude specific directories
+   - Regular expression pattern matching for advanced filtering
+   - Blacklist functionality for problematic URLs
+   - File type filtering based on extensions or MIME types
+
+4. **Mode-specific Behavior**:
+   - Design Mode: Only process the initial page and direct resources, no recursive crawling
+   - Single Page: Process only the provided URL with direct resources, no recursion
+   - Path Restricted: Only follow URLs that match the specified path pattern
+   - Regex Filtered: Only process URLs matching the specified regular expression
+   - Full Scan: Complete crawl according to all configured settings
+
+5. **Content Analysis**:
+   - Fingerprint pages to detect duplicate content
+   - Identify common elements (headers/footers) across multiple pages
+   - Detect template-driven content
+   - Create content graphs showing page relationships
+
+### Downloader Module Functionality
+
+The downloader module must implement these specific capabilities:
+
+1. **Resource Handling**:
+   - Implement proper MIME type detection and validation
+   - Handle various character encodings correctly
+   - Support binary file downloads (images, PDFs, etc.)
+   - Implement streaming downloads for large files
+   - Preserve original metadata when possible
+
+2. **Domain Restriction**:
+   - Only download resources from the main domain by default
+   - Allow configurable inclusion of specific third-party domains
+   - Track and report external resource references that weren't downloaded
+   - Preserve external resource links without modification in HTML
+
+3. **Error Handling**:
+   - Document all HTTP errors (404, 503, etc.) without stopping the process
+   - Implement configurable retry logic (default: 3 retries with exponential backoff)
+   - Handle specific error types appropriately (timeout vs. server error)
+   - Create detailed error logs including timestamps, status codes, and URLs
+   - Provide visual indicators in the UI for failed resources
+
+4. **Performance Controls**:
+   - Implement configurable rate limiting (0.1-10 seconds between requests, default 0.5s)
+   - Allow adjustment of concurrent connection limit (1-10, default 3)
+   - Implement optional bandwidth throttling (bytes per second)
+   - Set configurable size limits (per file and total download size)
+   - Implement adaptive throttling based on server response times
+
+5. **Resource Storage**:
+   - Store downloaded resources in a structured directory hierarchy
+   - Use UUID-based directories to isolate each scan
+   - Preserve original URL structure in local paths
+   - Implement content deduplication for identical resources
+   - Include metadata about each resource
+
+### Validator Module Functionality
+
+The validator module must implement these specific capabilities:
+
+1. **Validation Framework**:
+   - Implement pluggable architecture for easy addition of new tests
+   - Support enabling/disabling individual tests or entire test groups via UI
+   - Define configurable severity levels for issues (error, warning, info)
+   - Implement rule priority for performance optimization
+   - Support custom validation rules created by users
+
+2. **Test Categories**:
+   - HTML5 Validation: syntax, structure, deprecated elements
+   - WCAG Accessibility: A and AA compliance levels
+   - Link Validation:
+     - Internal broken links (404, 500, etc.)
+     - External link verification (check status codes)
+     - External link monitoring with configurable depth
+     - Track external link performance (response time)
+     - Report on potentially malicious external targets
+     - Group external links by domain in reports
+   - Performance: resource size, request count, page weight
+   - Form Security: ensure forms not in header include CAPTCHA
+   - Spelling and Grammar: identify spelling errors with language detection
+   - Congressional Office Validation:
+     - "edit-" domain detection (e.g., edit-www.house.gov)
+     - "/node/[number]" path detection (blocked by firewall)
+   - SEO Validation: meta tags, heading structure, alt text
+   - Mobile Friendliness: viewport settings, tap targets
+
+3. **Screenshot Generation**:
+   - Capture full-page screenshots of every validated page
+   - Generate element-specific screenshots for each issue
+   - Create visual highlighting of issue areas
+   - Implement zoom capabilities for detailed inspection
+   - Generate thumbnails for report summaries
+
+4. **Result Organization**:
+   - Group issues by page with severity counts
+   - Group by violation type to find patterns
+   - Create separate section for issues in common elements
+   - Implement filtering by severity, category, and element type
+   - Provide statistics and trends for issue categories
+
+5. **Congressional Office Validation**:
+   - Specifically check for administrative links (edit-www.house.gov)
+   - Detect Drupal /node/[number] paths that would expose admin interfaces
+   - Check for campaign content (prohibited on government sites)
+   - Verify required constituent service information
+   - Validate official title usage standards
+
+### Link Modifier Functionality
+
+The link modifier module must implement these specific capabilities:
+
+1. **URL Rewriting for Offline Browsing**:
+   - Rewrite all internal links to point to local files
+   - Convert absolute URLs to relative paths based on local file structure
+   - Handle relative URLs to maintain correct relationships
+   - Process protocol-relative URLs (those starting with //)
+   - Handle fragment identifiers (#) and query parameters correctly
+
+2. **External Resource Handling**:
+   - Preserve external links without modification
+   - Add visual indicators to external links in packaged content
+   - Optionally add warning attributes or classes
+   - Implement configurable handling of external resources
+
+3. **Special Case Handling**:
+   - Process base tag adjustments
+   - Handle CSS @import statements
+   - Process url() references in CSS
+   - Handle JavaScript URLs and redirects when possible
+   - Preserve data URLs and properly encode them
+
+4. **Rewriting Scope**:
+   - Process HTML attributes: href, src, action, data-*, srcset
+   - Process CSS properties: url(), @import
+   - Handle inline styles with url() references
+   - Process certain JavaScript strings containing URLs
+   - Handle custom attributes with URL values
+
+### Packager Module Functionality
+
+The packager module must implement these specific capabilities:
+
+1. **Compression Options**:
+   - Implement multiple compression levels (none, fast, balanced, maximum)
+   - Support multiple formats (zip, tar.gz)
+   - Allow file exclusion patterns for temporary or unnecessary files
+   - Preserve directory structure in packaged archive
+   - Implement file deduplication to minimize package size
+
+2. **Content Organization**:
+   - Preserve original website structure in package
+   - Create separate directories for different resource types
+   - Place index file at the root for immediate access
+   - Include metadata about the packaging process
+   - Create logical file naming conventions
+
+3. **Included Components**:
+   - Downloaded website resources with all links rewritten for offline use
+   - Validation reports in HTML format
+   - Screenshots with issue highlighting
+   - Simple navigation interface for browsing the content
+   - JSON metadata file with scan details
+
+4. **Package Browser**:
+   - Create a simple HTML-based navigator for the packaged content
+   - Include links to validation reports
+   - Provide issue highlighting in context
+   - Implement simple search functionality
+   - Create standalone experience without server dependency
+
+5. **Link Rewriting**:
+   - Ensure all internal links are properly rewritten to work offline
+   - Maintain functional navigation between pages
+   - Preserve external links with appropriate indicators
+   - Handle all resource references (CSS, images, scripts)
+   - Test package integrity before finalizing
+
+## Screenshot and Visual Evidence System
+
+The application must implement a comprehensive screenshot and visual evidence system with these specific capabilities:
+
+### Screenshot Capture Architecture
+
+1. **Capture Technology**:
+   - Use Playwright for high-fidelity full-page screenshots
+   - Support configurable viewport sizes (desktop, tablet, mobile)
+   - Handle dynamic content with configurable wait times
+   - Support authentication for password-protected sites
+   - Inject scripts to highlight elements before capture
+
+2. **Capture Process**:
+   - Take full-page screenshots during initial validation
+   - Capture element-specific screenshots for each issue
+   - Implement batched processing to reduce overhead
+   - Use a priority queue to handle visible elements first
+   - Support configurable image quality settings
+
+3. **Storage Implementation**:
+   - Compress screenshots using PNG format with configurable compression
+   - Implement caching to prevent duplicate captures
+   - Create a directory structure organized by scan UUID
+   - Implement automatic cleanup based on retention policy
+   - Store metadata linking screenshots to specific issues
+
+### UI Integration of Screenshots
+
+1. **Thumbnail Generation**:
+   - Create 200x150px thumbnails for report listing
+   - Use lazy loading to improve performance
+   - Add visual indicators for pages with critical issues
+   - Implement hover previews with issue counts
+   - Optimize thumbnails for quick loading
+
+2. **Modal Implementation**:
+   - Create responsive modal overlay with semi-transparent background
+   - Include close button and ESC key dismissal
+   - Preload adjacent screenshots for quick navigation
+   - Support keyboard navigation between issues
+   - Implement touch gestures for mobile devices
+
+3. **Issue Highlighting**:
+   - Create translucent colored overlays for issue locations
+   - Use color coding by severity (red=error, yellow=warning, blue=info)
+   - Add numbering for multiple issues on same page
+   - Include toggle controls to show/hide different severity levels
+   - Make highlighting responsive to viewport changes
+
+4. **Code Integration**:
+   - Synchronize highlighting between screenshot and HTML code
+   - Implement syntax highlighting for HTML snippets
+   - Add line numbers corresponding to source
+   - Include copy button for HTML code
+   - Highlight specific attributes or elements causing issues
+
+5. **Navigation Features**:
+   - Add prev/next buttons for moving between issues
+   - Include issue counter (e.g., "3 of 12 issues")
+   - Implement quick jump to specific issue types
+   - Add filtering options within the modal view
+   - Include view switching between original and modified versions
+
+## Reporting and Analysis
+
+The application must provide comprehensive reporting and analysis features:
+
+### Report Generation
+
+1. **Data Sources**:
+   - Generate reports directly from SQLite database
+   - Implement real-time querying for current results
+   - Cache report data for large scans to improve performance
+   - Create database views for common report queries
+   - Use incremental updates for real-time reporting
+
+2. **Report Organization and Grouping**:
+   - **Flexible Issue Grouping**:
+     - Group by page (all issues on a specific page)
+     - Group by issue type (all occurrences of same issue)
+     - Group by common elements (header, footer, navigation, sidebar)
+     - Each group displayed as interactive dropdown/accordion
+     - Group header displays summary statistics and metrics
+     - Collapsed by default with expandable details
+   - **Group Header Information**:
+     - For page groups: page title, URL, size, issue count by severity
+     - For issue groups: issue description, occurrence count, pages affected
+     - For common element groups: element type, occurrence count, issue types
+     - Visual severity indicators (color-coded icons)
+     - Quick actions (expand all, collapse all, filter within)
+
+3. **Detail View Components**:
+   - **Page Reference Section**:
+     - Link to original online page
+     - Link to locally stored version
+     - Page metadata (size, load time, resource count)
+     - Quick navigation to related issues
+   - **Screenshot Implementation**:
+     - Page thumbnail that opens modal when clicked
+     - Modal displays full page screenshot with highlighted issue areas
+     - Zoom and pan controls within modal
+     - Navigation between issues on the same page within modal
+     - Option to toggle highlighting on/off
+   - **HTML Element Display**:
+     - Syntax-highlighted HTML snippet of problematic element
+     - Displayed directly below screenshot in modal view
+     - Copy-to-clipboard functionality with single-click icon
+     - Line numbers for reference
+     - Optional: before/after view for remediation suggestions
+
+4. **On-Page Reports**:
+   - Display interactive validation results directly in the application
+   - Implement real-time filtering and sorting
+   - Create collapsible sections for better organization
+   - Provide direct links to issues in context
+   - Include statistics and trend analysis
+
+3. **Exportable Reports**:
+   - Generate PDF reports with configurable sections
+   - Create CSV exports for data analysis
+   - Support JSON export for integration with other tools
+   - Implement HTML export for sharing
+   - Allow configuration of export content and detail level
+
+4. **Specialized Reports**:
+   - Create spelling and grammar error reports
+   - Generate administrative link reports (edit- domains, node paths)
+   - Produce content quality metrics reports
+   - Create accessibility compliance status reports
+   - Generate external resources reports
+
+### Spell Checking and Grammar Validation
+
+1. **Language Support**:
+   - Support multiple languages (English variants, Spanish, French, German)
+   - Implement automatic language detection
+   - Allow custom dictionary additions
+   - Support technical terminology exceptions
+   - Handle multilingual content on the same page
+
+2. **Configuration Options**:
+   - Offer multiple sensitivity levels (strict, normal, relaxed)
+   - Allow industry-specific terminology exclusions
+   - Support technical term whitelisting
+   - Implement brand name recognition
+   - Create custom rule sets for specific needs
+
+3. **Contextual Analysis**:
+   - Implement proper noun recognition
+   - Add technical terminology awareness
+   - Exclude code snippets from spell checking
+   - Distinguish between meta content and visible content
+   - Consider text context for grammar checking
+
+4. **Reporting Details**:
+   - List misspelled words with suggestions
+   - Identify contextual grammar issues
+   - Flag consistency issues (e.g., capitalization)
+   - Perform word frequency analysis
+   - Report commonly misspelled terms across site
+
+### Search and Analysis Capabilities
+
+1. **Content Search**:
+   - Implement full-text search across all downloaded pages
+   - Support exact text, regex, and fuzzy matching
+   - Add case-sensitive/insensitive options
+   - Allow search within specific content types
+   - Provide result highlighting with context
+
+2. **Element Search**:
+   - Find HTML elements by class name
+   - Locate elements by ID
+   - Search for specific CSS selectors
+   - Find JavaScript functions and variables
+   - Create cross-references between HTML, CSS, and JS
+
+3. **Result Presentation**:
+   - Group results by page
+   - Sort by relevance or page order
+   - Show context preview with highlighted match
+   - Provide quick navigation to full page
+   - Allow export of search results to CSV
+
+4. **Sentiment Analysis**:
+   - Perform page-level sentiment scoring
+   - Detect emotional tone of content
+   - Analyze sentiment trends across site sections
+   - Identify potentially problematic content
+   - Visualize sentiment distribution
+
+## User Interface Requirements
+
+The application must implement a clean, intuitive user interface with these specific components:
+
+### Home Screen
+
+1. **Mode Selection**:
+   - Display clear, visual mode selection (Full, Design, Single, Path, Regex)
+   - Show appropriate configuration options for each mode
+   - Include brief explanations of each mode
+   - Remember last used mode as default
+   - Allow quick switching between modes
+
+2. **URL Input**:
+   - Provide prominent URL input field
+   - Automatically normalize URLs behind the scenes
+   - Include example placeholder text
+   - Provide basic validation feedback
+   - Show history of recently used URLs
+
+3. **Quick Start Options**:
+   - Display saved configuration presets
+   - Include common starting points
+   - Show recent scan history
+   - Provide quick access to documentation
+   - Include sample use case buttons
+
+### Configuration Screen
+
+1. **Settings Organization**:
+   - Organize options by logical categories
+   - Implement collapsible panels for complex settings
+   - Show contextual help for each option
+   - Include search functionality for finding specific settings
+   - Remember user preferences between sessions
+
+2. **Test Configuration**:
+   - Allow enabling/disabling individual tests
+   - Support enabling/disabling entire test categories
+   - Provide description and examples for each test
+   - Show default settings with reset option
+   - Allow saving of custom configurations
+   - **External Link Settings**:
+     - Configure external link checking depth (none, status only, shallow crawl)
+     - Set timeout thresholds for external link checks
+     - Configure retry attempts for failed external links
+     - Allow whitelisting/blacklisting of external domains
+     - Set maximum number of external links to check per domain
+     - Configure severity level for different types of external link issues
+
+3. **URL Filtering Section**:
+   - Include regex input with syntax highlighting
+   - Add test button to validate patterns
+   - Include include/exclude toggle
+   - Provide dropdown of saved patterns
+   - Show helper with common patterns
+
+4. **Resource Controls**:
+   - Add domain restriction settings
+   - Include rate limiting controls
+   - Provide concurrent connection settings
+   - Show file type filters
+   - Include download size limitations
+
+### Progress Screen
+
+1. **Real-time Indicators**:
+   - Show overall completion percentage with visual progress bar
+   - Display live counter for pages scanned (incremental updates)
+   - Show live counter for total resources downloaded
+   - Include elapsed time counter in hours:minutes:seconds format
+   - Display currently processing URL with continuous updates
+   - Show resource counts by type (HTML, CSS, JS, images, etc.)
+   - **Display Size Tracking**:
+     - Show total download size in real-time (KB/MB/GB)
+     - Display average page size statistics
+     - Show largest resources with size and type
+     - Update size metrics with each completed download
+     - Include size-based warnings for unusually large resources
+
+2. **Detailed Status Information**:
+   - Display current crawling depth level
+   - Show download queue size in real time
+   - Display validation queue size and progress
+   - Show error counter with severity breakdown
+   - Display download speed in resources per minute
+   - Show estimated time remaining based on progress
+
+3. **Activity Logs**:
+   - Implement scrollable log of recent activities
+   - Add filtering by type (crawl, download, validation)
+   - Include error highlighting in log
+   - Add auto-scroll toggle option
+   - Implement log level filtering (debug, info, warning, error)
+   - Allow log export for debugging
+
+4. **Control Options**:
+   - Add pause/resume functionality with clear visual state
+   - Include cancel option with confirmation dialog
+   - Allow adjustment of concurrent connections during operation
+   - Implement priority override for specific URLs
+   - Add "skip to validation" option to bypass remaining downloads
+   - Include "generate report" button for in-progress scans
+
+### Results Screen
+
+1. **Summary View**:
+   - Show comprehensive validation summary with issue counts
+   - Display breakdown by severity (errors, warnings, info)
+   - Include scan metadata (time taken, pages scanned, etc.)
+   - Show pie charts for issue distribution
+   - Include pass/fail indicators for each test category
+   - Add visual indicators for critical issues
+
+2. **Main Report View**:
+   - **Grouping Controls**:
+     - Dropdown menu to select grouping method (by page, by issue type, by element)
+     - Option to show/hide different severity levels
+     - Filter controls for specific issue types or pages
+     - Sort options (alphabetical, severity, count)
+   - **Accordion/Dropdown Interface**:
+     - Each group (page/issue type/element) as collapsible section
+     - Group header showing summary statistics when collapsed
+     - Expand/collapse all controls
+     - Click to expand individual sections
+   - **Detail Presentation**:
+     - Within each expanded group, list all relevant issues
+     - For each issue: description, location, severity, remediation suggestion
+     - Page thumbnail next to each issue entry
+     - Click thumbnail to open modal with highlighted screenshot
+     - HTML element snippet shown below screenshot in modal
+     - Copy-to-clipboard button for HTML element
+
+3. **Size Analysis Section**:
+   - Display total website size with breakdown by resource types
+   - Show largest pages with their individual sizes
+   - Include table of largest resources across the site
+   - Provide size distribution chart (by file type, folder, etc.)
+   - Show comparison to size benchmarks for similar sites
+   - Include optimization recommendations for large resources
+
+4. **External Links Section**:
+   - Display summary of all external links found
+   - Show breakdown of external links by status (working, broken, timeout)
+   - Include performance metrics (average response time)
+   - List all broken external links with status codes
+   - Group external links by domain with health indicators
+   - Provide export option for external link inventory
+
+3. **Screenshot Integration**:
+   - Display thumbnail grid of pages with issues
+   - Implement click action to open modal with full screenshot
+   - Show highlighted issue locations on screenshots
+   - Display HTML snippet below screenshot
+   - Add navigation between issues within the modal
+   - Include zoom and pan controls for detailed inspection
+
+4. **External Resources Section**:
+   - List all external resources not downloaded
+   - Group by domain and resource type
+   - Show status (linked but not downloaded)
+   - Include counts and file sizes when available
+   - Add option to download specific external resources
+   - Show dependency graph for external resources
+
+5. **Export Controls**:
+   - Provide PDF report generation options
+   - Include CSV export with configurable fields
+   - Add JSON export for programmatic use
+   - Implement HTML report generation
+   - Support batch export of multiple reports
+   - Allow custom branding of exported reports
+
+### History Management Interface
+
+1. **Scan History**:
+   - Show list of all previous scans with filtering options
+   - Include sort by date, URL, issue count, or status
+   - Display thumbnail previews of scanned sites
+   - Show progress/status indicators
+   - Include quick action buttons for common operations
+   - Implement search within scan history
+
+2. **Management Features**:
+   - Allow bulk selection of scans for operations
+   - Implement delete functionality with confirmation
+   - Add archive option for long-term retention
+   - Include export of multiple scan results
+   - Show comparisons between selected scans
+   - Allow tagging and categorization of scans
+
+3. **Rerun Functionality**:
+   - Implement "rerun" option using identical settings
+   - Add "clone and edit" to modify settings before running
+   - Show detailed view of previous configuration
+   - Allow partial reruns (validation only, specific sections)
+   - Include scheduling option for periodic reruns
+   - Support notification on completion of rerun
+
+## UI Design Principles
+
+The application must adhere to these specific design principles to ensure a clean, professional interface:
+
+### Layout Structure
+
+1. **Clean, Minimalist Approach**:
+   - Use ample white space (minimum 16px margins between sections)
+   - Implement collapsible panels for complex configuration options
+   - Apply consistent padding (16px) and margins throughout
+   - Use subtle dividers (1px, low opacity) rather than heavy borders
+   - Limit color usage to create visual hierarchy
+   - Remove any non-essential UI elements
+
+2. **Information Hierarchy**:
+   - Organize content by importance with visual emphasis on primary actions
+   - Use size, weight, and color to establish hierarchy
+   - Implement progressive disclosure to reveal complexity only when needed
+   - Group related functionality with clear section headings
+   - Use breadcrumbs for deep navigation paths
+   - Ensure critical information and actions are immediately visible
+
+3. **Responsive Considerations**:
+   - Design for multiple device sizes with fluid layouts
+   - Implement specific breakpoints at 576px, 768px, 992px, and 1200px
+   - Ensure touch-friendly targets (minimum 44x44px) on mobile interfaces
+   - Test usability across device types
+   - Use appropriate input methods for each device type
+   - Adjust information density based on screen size
+
+### UI Components
+
+1. **Interactive Elements**:
+   - Use tabs for switching between major sections
+   - Implement accordions for expandable content areas
+   - Use card layouts for resource and issue listings
+   - Add slide-out panels for detailed configurations
+   - Implement modal dialogs for focused tasks
+   - Use consistent interaction patterns throughout
+
+2. **Data Presentation**:
+   - Implement data tables with sorting, filtering, and pagination
+   - Use collapsible tree views for hierarchical data
+   - Add tooltips for explanatory information
+   - Implement skeleton loaders during data fetching
+   - Use appropriate visualizations for different data types
+   - Ensure all data is accessible via keyboard and screen readers
+
+3. **Navigation Patterns**:
+   - Include sticky navigation bar with context-aware options
+   - Implement wizard interfaces for multi-step processes
+   - Add breadcrumb trails for deep hierarchies
+   - Use tab interfaces for parallel content areas
+   - Implement consistent back buttons and navigation paths
+   - Add keyboard shortcuts for common actions
+
+### Visual Design
+
+1. **Color System**:
+   - Use limited color palette with 1-2 primary colors
+   - Implement semantic color usage (red for errors, green for success)
+   - Ensure sufficient contrast ratios for accessibility (minimum 4.5:1)
+   - Apply consistent color meaning throughout application
+   - Use color to support hierarchy, not define it
+   - Include dark mode option with appropriate color adjustments
+
+2. **Typography**:
+   - Implement clear typographic hierarchy (headings, subheadings, body text)
+   - Use limited font families (1-2 maximum)
+   - Apply appropriate line heights (1.5 for body, 1.2 for headings)
+   - Use responsive font sizing with rem units
+   - Ensure minimum font size of 16px for body text
+   - Maintain consistent alignment patterns
+
+3. **Iconography**:
+   - Use consistent icon style throughout the application
+   - Apply icons sparingly and always with text labels
+   - Implement standard icons for common actions
+   - Use custom icons only for specialized functions
+   - Ensure all icons have proper alt text
+   - Maintain consistent sizing and positioning
+
+### Interaction Design
+
+1. **Feedback Mechanisms**:
+   - Provide visual feedback for all user actions
+   - Implement progress indicators for operations over 1 second
+   - Use toast notifications for system messages
+   - Add hover states for interactive elements
+   - Include loading states for asynchronous operations
+   - Provide error messages in context
+
+2. **Form Controls**:
+   - Implement inline validation with clear error messages
+   - Use smart defaults to minimize user effort
+   - Ensure logical tab order for keyboard navigation
+   - Group fields based on conceptual relationships
+   - Use appropriate input types for different data
+   - Add helper text for complex inputs
+
+3. **State Management**:
+   - Create clear visual distinction between different system states
+   - Implement persistence of user preferences
+   - Add undo/redo capability for destructive actions
+   - Use auto-save for long forms
+   - Preserve user's place when navigating
+   - Show confirmation dialogs for irreversible actions
+
+## API Endpoints
+
+The application must implement the following RESTful API endpoints with exact specifications:
+
+### Core Operations
+
+1. `POST /api/scan`:
+   - **Purpose**: Start a new scan with configuration
+   - **Request Body**: JSON with scan configuration
+   - **Required Fields**: url, mode, config object
+   - **Response**: UUID of the created scan
+   - **Status Codes**: 201 Created, 400 Bad Request
+   - **Rate Limiting**: Maximum 5 requests per minute per IP
+
+2. `GET /api/scan/{uuid}/status`:
+   - **Purpose**: Get current status and progress
+   - **URL Parameters**: uuid (scan identifier)
+   - **Response**: JSON with status, progress percentage, current activity
+   - **Size Metrics Included**: total_download_size, current_page_size, average_page_size
+   - **Status Codes**: 200 OK, 404 Not Found
+   - **Polling Rate**: Maximum 1 request per second
+
+3. `GET /api/scan/{uuid}/resources`:
+   - **Purpose**: List downloaded resources
+   - **URL Parameters**: uuid (scan identifier)
+   - **Query Parameters**: page, limit, type, status, min_size, max_size, sort_by_size
+   - **Response**: Paginated JSON with resource details including individual sizes
+   - **Status Codes**: 200 OK, 404 Not Found
+   - **Caching**: Cache for 5 seconds
+
+4. `GET /api/scan/{uuid}/validation`:
+   - **Purpose**: Get validation results
+   - **URL Parameters**: uuid (scan identifier)
+   - **Query Parameters**: severity, group, page, limit
+   - **Response**: JSON with validation issues
+   - **Status Codes**: 200 OK, 404 Not Found
+   - **Sorting**: Default by severity, configurable
+
+5. `GET /api/scan/{uuid}/report`:
+   - **Purpose**: Generate and retrieve report data
+   - **URL Parameters**: uuid (scan identifier)
+   - **Query Parameters**: format, sections
+   - **Response**: Report data in requested format
+   - **Status Codes**: 200 OK, 404 Not Found, 422 Unprocessable Entity
+   - **Formats**: json, html, summary
+
+6. `GET /api/scan/{uuid}/screenshots`:
+   - **Purpose**: Get screenshots with metadata
+   - **URL Parameters**: uuid (scan identifier)
+   - **Query Parameters**: page, limit, type
+   - **Response**: JSON with screenshot metadata and URLs
+   - **Status Codes**: 200 OK, 404 Not Found
+   - **Types**: full_page, element, highlight
+
+7. `GET /api/scan/{uuid}/screenshot/{resource_id}`:
+   - **Purpose**: Get specific screenshot
+   - **URL Parameters**: uuid (scan identifier), resource_id
+   - **Query Parameters**: size (full, thumbnail)
+   - **Response**: Image file or JSON with error
+   - **Status Codes**: 200 OK, 404 Not Found
+   - **Content Types**: image/png, image/jpeg
+
+8. `GET /api/scan/{uuid}/element/{validation_id}`:
+   - **Purpose**: Get HTML snippet of problematic element
+   - **URL Parameters**: uuid (scan identifier), validation_id
+   - **Response**: JSON with HTML snippet, line numbers, context
+   - **Status Codes**: 200 OK, 404 Not Found
+   - **Output Format**: Syntax highlighted HTML
+
+9. `POST /api/scan/{uuid}/package`:
+   - **Purpose**: Create downloadable package
+   - **URL Parameters**: uuid (scan identifier)
+   - **Request Body**: JSON with packaging options
+   - **Response**: JSON with package details and download URL
+   - **Status Codes**: 201 Created, 404 Not Found, 422 Unprocessable Entity
+   - **Async Operation**: Returns job ID for status polling
+
+10. `GET /api/scan/{uuid}/download`:
+    - **Purpose**: Download the final package
+    - **URL Parameters**: uuid (scan identifier)
+    - **Query Parameters**: format (zip, tar.gz)
+    - **Response**: Binary file download
+    - **Status Codes**: 200 OK, 404 Not Found, 409 Conflict (if package not ready)
+    - **Content Type**: application/zip or application/gzip
+
+### Search Operations
+
+1. `POST /api/scan/{uuid}/search`:
+   - **Purpose**: Search content with specified criteria
+   - **URL Parameters**: uuid (scan identifier)
+   - **Request Body**: JSON with search parameters
+   - **Response**: JSON with search results or search_id for async results
+   - **Status Codes**: 200 OK, 202 Accepted, 404 Not Found
+   - **Parameters**: query, case_sensitive, regex, content_types
+
+2. `GET /api/scan/{uuid}/search/{search_id}`:
+   - **Purpose**: Get search results for previous query
+   - **URL Parameters**: uuid (scan identifier), search_id
+   - **Query Parameters**: page, limit
+   - **Response**: Paginated JSON with search results
+   - **Status Codes**: 200 OK, 404 Not Found, 409 Conflict (if search in progress)
+   - **Expiration**: Search results cached for 1 hour
+
+3. `GET /api/scan/{uuid}/elements`:
+   - **Purpose**: Find elements by class or ID
+   - **URL Parameters**: uuid (scan identifier)
+   - **Query Parameters**: type (class, id), value, page, limit
+   - **Response**: JSON with matching elements
+   - **Status Codes**: 200 OK, 404 Not Found
+   - **Sorting**: Default by page, configurable
+
+4. `GET /api/scan/{uuid}/patterns`:
+   - **Purpose**: Find usage patterns across the site
+   - **URL Parameters**: uuid (scan identifier)
+   - **Query Parameters**: pattern_type, page, limit
+   - **Response**: JSON with pattern analysis
+   - **Status Codes**: 200 OK, 404 Not Found
+   - **Pattern Types**: class_usage, tag_distribution, attribute_usage
+
+### Regex Operations
+
+1. `GET /api/regex/saved`:
+   - **Purpose**: List saved regex patterns
+   - **Query Parameters**: page, limit
+   - **Response**: JSON with saved patterns
+   - **Status Codes**: 200 OK
+   - **Sorting**: Default by last_used, configurable
+
+2. `POST /api/regex/save`:
+   - **Purpose**: Save a new regex pattern
+   - **Request Body**: JSON with pattern details
+   - **Required Fields**: name, pattern, description, is_inclusive
+   - **Response**: JSON with created pattern details
+   - **Status Codes**: 201 Created, 400 Bad Request
+   - **Validation**: Pattern syntax checking before saving
+
+3. `PUT /api/regex/{id}`:
+   - **Purpose**: Update an existing regex pattern
+   - **URL Parameters**: id (pattern identifier)
+   - **Request Body**: JSON with updated pattern details
+   - **Response**: JSON with updated pattern
+   - **Status Codes**: 200 OK, 404 Not Found, 400 Bad Request
+   - **Fields**: Any updatable field (name, pattern, description, is_inclusive)
+
+4. `DELETE /api/regex/{id}`:
+   - **Purpose**: Delete a saved regex pattern
+   - **URL Parameters**: id (pattern identifier)
+   - **Response**: Success confirmation
+   - **Status Codes**: 204 No Content, 404 Not Found
+   - **Restrictions**: Cannot delete system patterns
+
+5. `POST /api/regex/test`:
+   - **Purpose**: Test a regex against sample URLs
+   - **Request Body**: JSON with pattern and test URLs
+   - **Response**: JSON with match results for each URL
+   - **Status Codes**: 200 OK, 400 Bad Request (invalid regex)
+   - **Validation**: Syntax checking and performance warnings
+
+6. `GET /api/regex/examples`:
+   - **Purpose**: Get example regex patterns for common use cases
+   - **Query Parameters**: category
+   - **Response**: JSON with example patterns
+   - **Status Codes**: 200 OK
+   - **Categories**: file_extensions, admin_paths, query_params, etc.
+
+### Management Operations
+
+1. `GET /api/scans`:
+   - **Purpose**: List all scans from database
+   - **Query Parameters**: page, limit, status, domain, from_date, to_date
+   - **Response**: Paginated JSON with scan metadata
+   - **Status Codes**: 200 OK
+   - **Sorting**: Default by date descending
+
+2. `DELETE /api/scan/{uuid}`:
+   - **Purpose**: Cancel and remove a scan
+   - **URL Parameters**: uuid (scan identifier)
+   - **Query Parameters**: remove_files (boolean)
+   - **Response**: Success confirmation
+   - **Status Codes**: 204 No Content, 404 Not Found
+   - **Side Effects**: Deletes associated resources if remove_files=true
+
+3. `GET /api/settings`:
+   - **Purpose**: Get current default settings
+   - **Response**: JSON with all configurable settings and their values
+   - **Status Codes**: 200 OK
+   - **Categories**: Organized by module
+
+4. `POST /api/settings`:
+   - **Purpose**: Update default settings
+   - **Request Body**: JSON with settings to update
+   - **Response**: JSON with updated settings
+   - **Status Codes**: 200 OK, 400 Bad Request
+   - **Validation**: Type and range checking for all values
+
+5. `GET /api/test-config`:
+   - **Purpose**: Get available test configurations
+   - **Query Parameters**: page, limit
+   - **Response**: JSON with test configurations
+   - **Status Codes**: 200 OK
+   - **Sorting**: Default by last_used
+
+6. `POST /api/test-config`:
+   - **Purpose**: Create or update test configuration
+   - **Request Body**: JSON with configuration details
+   - **Response**: JSON with created/updated configuration
+   - **Status Codes**: 201 Created or 200 OK, 400 Bad Request
+   - **Required Fields**: name, test_settings
+
+## Development Methodology
+
+### Function-Level Development Process
+
+1. **Structured Development Approach**:
+   - Use Test-Driven Development (TDD) methodology
+   - Develop each function as a distinct, testable unit
+   - Follow this sequence for each function: design → test specification → implementation → validation
+   - Document the purpose, inputs, outputs, and edge cases for each function
+   - Maintain a function registry with completion status
+
+2. **Function Implementation Process**:
+   - Create function signature with detailed docstring
+   - Identify all required parameters and return types
+   - Implement parameter validation with appropriate error handling
+   - Develop core logic with clear separation of concerns
+   - Add logging at appropriate levels (debug, info, warning, error)
+   - Include performance considerations (time/space complexity)
+   - Document any side effects or state changes
+
+3. **Function Testing Requirements**:
+   - Write unit tests before implementing each function
+   - Test all normal use cases with expected inputs
+   - Test all edge cases and boundary conditions
+   - Include explicit error case testing
+   - Create integration tests for function interactions
+   - Implement performance tests for resource-intensive functions
+   - Add regression tests to prevent previously fixed bugs
+
+4. **Test Coverage Requirements**:
+   - Achieve minimum 90% code coverage for all functions
+   - Include branch coverage for conditional logic
+   - Test all parameter combinations for critical functions
+   - Ensure test independence (no interdependencies)
+   - Implement both positive and negative test cases
+   - Create mock objects for external dependencies
+   - Document any untested code with justification
+
+## Implementation Requirements
+
+The application must meet these specific implementation requirements:
+
+1. **Multi-threading Requirements**:
+   - Implement thread pool with configurable size (1-16 threads)
+   - Use thread safety mechanisms to prevent race conditions
+   - Ensure proper thread cleanup on task completion
+   - Apply thread priority settings for critical operations
+   - Implement thread monitoring for deadlock detection
+   - Use async/await patterns where appropriate
+
+2. **Parallel Processing Requirements**:
+   - Implement pipeline architecture with at least 4 stages
+   - Ensure each stage can operate concurrently
+   - Apply backpressure mechanisms to prevent memory issues
+   - Use buffering between stages to optimize throughput
+   - Implement clear logging of pipeline operations
+   - Add monitoring of pipeline performance metrics
+
+3. **Memory Efficiency Requirements**:
+   - Use streaming processing for large files
+   - Implement resource pooling for common objects
+   - Apply garbage collection hints for large operations
+   - Use memory-mapped files for large datasets
+   - Implement automatic cleanup of temporary resources
+   - Add monitoring of memory usage patterns
+
+4. **Error Handling Requirements**:
+   - Implement comprehensive try/catch blocks
+   - Apply graceful degradation for non-critical failures
+   - Use retry mechanisms with exponential backoff
+   - Implement circuit breakers for external dependencies
+   - Create user-friendly error messages
+   - Log detailed error information (see Error Handling and Logging section)
+
+5. **Documentation Requirements**:
+   - Provide comprehensive API documentation
+   - Include detailed code comments
+   - Create user manual with examples and screenshots
+   - Add technical architecture documentation
+   - Include installation and deployment guides
+   - Provide troubleshooting and FAQ sections
+
+## Testing Framework and Strategy
+
+### Comprehensive Testing Approach
+
+1. **Unit Testing Framework**:
+   - Use pytest for Python backend testing
+   - Implement Jest for JavaScript frontend testing
+   - Create custom test fixtures for common scenarios
+   - Organize tests to mirror application structure
+   - Implement test tagging for selective execution
+   - Automate test execution via CI/CD pipeline
+
+2. **Function-Level Testing**:
+   - **For Each Function/Method**:
+     - Create dedicated test file with function name (e.g., `test_normalize_url.py`)
+     - Write positive tests for expected behavior with normal inputs
+     - Write negative tests for error handling with invalid inputs
+     - Test boundary conditions and edge cases
+     - Measure and assert performance characteristics for critical functions
+     - Verify function interactions with dependencies (using mocks)
+   - **Testing Metrics**:
+     - Track code coverage at function level
+     - Monitor test execution time for performance regression
+     - Record assertion counts for test quality
+     - Validate input/output contract compliance
+
+3. **Integration Testing**:
+   - Create integration tests for module interactions
+   - Test complete workflows from end to end
+   - Verify database transactions and state changes
+   - Test API endpoints with realistic payloads
+   - Validate WebSocket communication
+   - Test concurrent operation handling
+
+4. **UI Testing**:
+   - Implement automated UI tests with Playwright
+   - Create visual regression tests for components
+   - Test responsive behavior across devices
+   - Verify accessibility compliance
+   - Test keyboard navigation and screen reader compatibility
+   - Validate form submission and error handling
+
+5. **Performance and Load Testing**:
+   - Benchmark system performance with various load profiles
+   - Test concurrent user scenarios
+   - Measure memory consumption during extended operation
+   - Test with large websites (1000+ pages)
+   - Validate resource cleanup after processing
+   - Measure database query performance
+
+### Test Documentation Requirements
+
+1. **Test Plans**:
+   - Create master test plan with overall strategy
+   - Develop detailed test plans for each module
+   - Document test environment requirements
+   - Define acceptance criteria for each feature
+   - Create test schedules and resource allocations
+   - Document risk assessment and mitigation
+
+2. **Test Cases**:
+   - Write detailed test cases with steps, inputs, and expected outcomes
+   - Include preconditions and postconditions
+   - Link test cases to requirements
+   - Add severity and priority classifications
+   - Document test data requirements
+   - Include cleanup procedures
+
+3. **Test Reports**:
+   - Generate automated test reports after each test run
+   - Include summary statistics (pass/fail counts, coverage)
+   - Provide detailed failure information with stack traces
+   - Track test trends over time
+   - Document bug references for failed tests
+   - Include screenshots for UI test failures
+
+2. **Documentation**:
+   - API documentation with OpenAPI/Swagger
+   - Developer documentation with architecture diagrams
+   - User manual with screenshots and examples
+   - Installation and deployment guide
+   - Performance tuning recommendations
+   - Troubleshooting guide
+
+3. **Deployment Package**:
+   - Environment configuration templates
+   - Database migration scripts
+   - System requirements documentation
+   - Backup and restore procedures
+   - Monitoring and alerting setup
+
+4. **Testing Materials**:
+   - Comprehensive test suite
+   - Test coverage reports
+   - Performance benchmark results
+   - Security scanning reports
+   - Accessibility compliance reports
+   - Browser compatibility matrix
+
+Develop the application as a modular, well-documented codebase that meets all specifications while maintaining cross-platform compatibility. Design the UI with a focus on clean layouts, appropriate use of white space, and progressive disclosure of complex functionality to ensure an intuitive user experience with clear visual feedback at all stages of the process.
