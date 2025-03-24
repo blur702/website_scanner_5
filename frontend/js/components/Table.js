@@ -2,6 +2,9 @@
 
 const Table = {
     init: function() {
+        // Added functionality for pagination
+        this.initPagination();
+        
         // Initialize table sorting, pagination, etc.
         document.querySelectorAll('.table-sortable th').forEach(headerCell => {
             headerCell.addEventListener('click', () => {
@@ -88,8 +91,76 @@ const Table = {
         if (options.sortable) {
             Table.init();
         }
-        
+
         return table;
+    },
+    
+    initPagination: function() {
+        document.querySelectorAll('.table-pagination').forEach(pagination => {
+            const table = document.querySelector(pagination.dataset.table);
+            if (!table) return;
+            
+            const itemsPerPage = parseInt(pagination.dataset.itemsPerPage) || 10;
+            const rows = table.querySelectorAll('tbody tr');
+            const pageCount = Math.ceil(rows.length / itemsPerPage);
+            
+            // Create pagination controls
+            let paginationHtml = '<div class="pagination">';
+            paginationHtml += '<button class="page-prev" disabled>&laquo; Prev</button>';
+            paginationHtml += '<span class="page-info">Page <span class="current-page">1</span> of ' + pageCount + '</span>';
+            paginationHtml += '<button class="page-next">Next &raquo;</button>';
+            paginationHtml += '</div>';
+            
+            pagination.innerHTML = paginationHtml;
+            
+            // Set current page
+            let currentPage = 1;
+            
+            // Show only first page initially
+            this.showPage(rows, currentPage, itemsPerPage);
+            
+            // Add event listeners
+            const prevButton = pagination.querySelector('.page-prev');
+            const nextButton = pagination.querySelector('.page-next');
+            const currentPageSpan = pagination.querySelector('.current-page');
+            
+            prevButton.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    this.showPage(rows, currentPage, itemsPerPage);
+                    currentPageSpan.textContent = currentPage;
+                    nextButton.disabled = false;
+                    if (currentPage === 1) {
+                        prevButton.disabled = true;
+                    }
+                }
+            });
+            
+            nextButton.addEventListener('click', () => {
+                if (currentPage < pageCount) {
+                    currentPage++;
+                    this.showPage(rows, currentPage, itemsPerPage);
+                    currentPageSpan.textContent = currentPage;
+                    prevButton.disabled = false;
+                    if (currentPage === pageCount) {
+                        nextButton.disabled = true;
+                    }
+                }
+            });
+        });
+    },
+    
+    showPage: function(rows, page, itemsPerPage) {
+        const startIndex = (page - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        
+        rows.forEach((row, index) => {
+            if (index >= startIndex && index < endIndex) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
     }
 };
 

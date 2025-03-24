@@ -43,7 +43,19 @@ class DbBrowserView {
     
     async loadTables() {
         try {
-            this.tables = await api.get('/db/tables');
+            // Add error handling for when api is not initialized
+            if (!window.api) {
+                document.getElementById('table-list').innerHTML = `
+                    <div class="alert alert-error">API not available. Please check your connection.</div>
+                `;
+                return;
+            }
+            
+            // Show loading state
+            document.getElementById('table-list').innerHTML = `
+                <div class="loading">Loading tables...</div>
+            `;
+            this.tables = await api.get('/api/db/tables');
             this.renderTableList();
         } catch (error) {
             document.getElementById('table-list').innerHTML = `
@@ -88,22 +100,25 @@ class DbBrowserView {
         // Update table list UI
         this.renderTableList();
         
-        // Show loading
+        // Show loading state
         document.getElementById('table-info').innerHTML = `<p>Loading ${tableName}...</p>`;
         document.getElementById('table-data').innerHTML = '';
         document.getElementById('table-pagination').innerHTML = '';
         
         try {
-            // Load schema and data in parallel
-            const [schema, data] = await Promise.all([
-                api.get(`/db/tables/${tableName}/schema`),
-                api.get(`/db/tables/${tableName}/data?page=${page}&limit=${this.pageSize}${this.sortColumn ? `&sort_by=${this.sortColumn}&sort_dir=${this.sortDirection}` : ''}`)
-            ]);
+            // Load schema
+            const schema = await api.get(`/api/db/tables/${tableName}/schema`);
+            
+            // Construct data request URL
+            const dataUrl = `/api/db/tables/${tableName}/data?page=${page}&limit=${this.pageSize}`;
+            const sortParams = this.sortColumn ? `&sort_by=${this.sortColumn}&sort_dir=${this.sortDirection}` : '';
+            
+            // Load data
+            const data = await api.get(dataUrl + sortParams);
             
             this.renderTableInfo(tableName, schema, data);
             this.renderTableData(data);
             this.renderPagination(data);
-            
         } catch (error) {
             document.getElementById('table-info').innerHTML = `
                 <div class="alert alert-error">Error loading table data: ${error.message}</div>

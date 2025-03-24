@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (window.Form) Form.init();
     if (window.Dropdown) Dropdown.init();
     if (window.Notification) Notification.init();
+    if (window.router) router.init(); // Initialize router
     
     // Define routes
     router.addRoute('/', function() {
