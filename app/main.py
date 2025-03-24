@@ -147,3 +147,35 @@ async def websocket_endpoint(websocket: WebSocket, scan_id: str):
 def get_connection_manager():
     return manager
 
+
+# WebSocket endpoint for real-time scan updates
+@app.websocket("/api/ws/scan/{scan_id}")
+async def websocket_endpoint(websocket: WebSocket, scan_id: str):
+    await manager.connect(websocket, scan_id)
+    try:
+        while True:
+            # Keep connection alive, actual messages will be sent via the broadcast method
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, scan_id)
+
+# Export the connection manager for use in services
+def get_connection_manager():
+    return manager
+
+
+# WebSocket endpoint for real-time scan updates
+@app.websocket("/api/ws/scan/{scan_id}")
+async def websocket_endpoint(websocket: WebSocket, scan_id: str):
+    await manager.connect(websocket, scan_id)
+    try:
+        while True:
+            # Keep connection alive, actual messages will be sent via the broadcast method
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, scan_id)
+
+# Export the connection manager for use in services
+def get_connection_manager():
+    return manager
+
