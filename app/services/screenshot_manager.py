@@ -52,7 +52,7 @@ class ScreenshotManager:
             # For now, simulate a successful capture by creating an empty file
             filesize = 0
             capture_success = True
-            error_message = ""
+            error_message = ""  # Empty string instead of None
 
             # Create an empty file to simulate the screenshot
             with open(path, 'w') as f:
@@ -93,9 +93,11 @@ class ScreenshotManager:
                 viewport_width=viewport_width,
                 viewport_height=viewport_height,
                 path=path,
+                thumbnail_path="",  # Added empty string for thumbnail_path
                 created_at=datetime.now(),
                 capture_success=False,
-                error_message=str(e)
+                error_message=str(e),
+                filesize=0  # Added missing filesize
             )
 
             self.db.add(screenshot)
