@@ -36,49 +36,49 @@ window.app = {
 // document.addEventListener('DOMContentLoaded', app.init);
 
 // Main application entry point
-
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize components
-    Table.init();
-    Tabs.init();
-    Form.init();
-    Dropdown.init();
+    if (window.Table) Table.init();
+    if (window.Tabs) Tabs.init();
+    if (window.Form) Form.init();
+    if (window.Dropdown) Dropdown.init();
+    if (window.Notification) Notification.init();
     
     // Define routes
     router.addRoute('/', function() {
         document.getElementById('view-container').innerHTML = '<h1>Welcome to Website Checker</h1>';
-        fetch('/js/views/HomeView.js')
-            .then(() => {
-                const homeView = new HomeView();
-                homeView.render();
-            })
-            .catch(error => {
-                console.error("Error loading HomeView:", error);
-            });
+        if (window.HomeView) {
+            HomeView.init();
+        } else {
+            console.error("HomeView component not loaded");
+        }
     });
     
     router.addRoute('/scan', function() {
         document.getElementById('view-container').innerHTML = '<h1>New Scan</h1>';
-        fetch('/js/views/ScanView.js')
-            .then(() => {
-                const scanView = new ScanView();
-                scanView.render();
-            })
-            .catch(error => {
-                console.error("Error loading ScanView:", error);
-            });
+        if (window.ScanView) {
+            ScanView.init();
+        } else {
+            console.error("ScanView component not loaded");
+        }
     });
     
     router.addRoute('/results', function() {
         document.getElementById('view-container').innerHTML = '<h1>Results</h1>';
-        fetch('/js/views/ResultsView.js')
-            .then(() => {
-                const resultsView = new ResultsView();
-                resultsView.render();
-            })
-            .catch(error => {
-                console.error("Error loading ResultsView:", error);
-            });
+        if (window.ResultsView) {
+            ResultsView.init();
+        } else {
+            console.error("ResultsView component not loaded");
+        }
+    });
+    
+    router.addRoute('/search', function() {
+        document.getElementById('view-container').innerHTML = '<h1>Search</h1>';
+        if (window.SearchView) {
+            SearchView.init();
+        } else {
+            console.error("SearchView component not loaded");
+        }
     });
     
     // Add database browser route
@@ -86,23 +86,46 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('view-container').innerHTML = '<h1>Database Browser</h1>';
         fetch('/js/views/DbBrowserView.js')
             .then(() => {
-                const dbBrowserView = new DbBrowserView();
-                dbBrowserView.render();
+                if (window.DbBrowserView) {
+                    const dbBrowserView = new DbBrowserView();
+                    dbBrowserView.render();
+                } else {
+                    console.error("DbBrowserView component not loaded");
+                }
             })
             .catch(error => {
                 console.error("Error loading DbBrowserView:", error);
             });
     });
     
-    // Initialize navigation
-    const navigation = new Navigation();
-    navigation.init();
-    
-    // Handle initial route
-    router.handleRoute();
-    
-    // Handle navigation
-    window.addEventListener('popstate', function() {
-        router.handleRoute();
+    router.addRoute('/settings', function() {
+        document.getElementById('view-container').innerHTML = '<h1>Settings</h1>';
+        if (window.SettingsView) {
+            SettingsView.init();
+        } else {
+            console.error("SettingsView component not loaded");
+        }
     });
+    
+    // Add 404 route handler
+    router.add404Handler(function() {
+        document.getElementById('view-container').innerHTML = `
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="card-title">Page Not Found</h1>
+                </div>
+                <div class="card-body">
+                    <p>The page you requested could not be found.</p>
+                    <button class="btn btn-primary" onclick="router.navigate('/')">Go Home</button>
+                </div>
+            </div>
+        `;
+    });
+    
+    // Initialize navigation
+    if (window.Navigation) {
+        Navigation.init();
+    }
+    
+    router.handleRoute();
 });

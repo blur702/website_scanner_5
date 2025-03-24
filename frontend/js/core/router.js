@@ -1,7 +1,9 @@
-// Simple client-side router for single-page application
+// frontend/js/core/router.js
+// Client-side router for single-page application
 
 const router = {
   routes: {},
+  notFoundHandler: null,
   
   // Register a route handler
   addRoute: function(path, handler) {
@@ -14,43 +16,59 @@ const router = {
     history.pushState(null, null, path);
     this.handleRoute();
   },
+
+  // Register a 404 handler
+  add404Handler: function(handler) {
+    this.notFoundHandler = handler;
+  },
   
   // Handle the current route based on window location
   handleRoute: function() {
     const path = window.location.pathname;
     console.log(`Handling route: ${path}`);
     
-    // Find exact match first
+    // Find exact route match first
     if (this.routes[path]) {
       this.routes[path]();
       return;
     }
     
-    // Check for parameterized routes like /results/:id
+    // Check for parameterized routes
+    let matchedParameterizedRoute = false;
     for (const route in this.routes) {
-      if (route.includes(':') && this._matchesPattern(path, route)) {
+      if (route.indexOf(':') !== -1 && this._matchesPattern(path, route)) {
         const params = this._extractParams(path, route);
         this.routes[route](params);
+        matchedParameterizedRoute = true;
         return;
       }
     }
     
-    // If no route matched, try root route or show 404
+    // Try default route if no specific route matched
     if (this.routes['/']) {
       this.routes['/']();
-    } else {
+    } 
+    // Use 404 handler if registered
+    else if (this.notFoundHandler) {
       console.error(`No route found for path: ${path}`);
-      document.getElementById('view-container').innerHTML = `
-        <div class="card">
-          <div class="card-header">
-            <h1 class="card-title">Page Not Found</h1>
+      this.notFoundHandler();
+    }
+    // Fallback 404 handling
+    else {
+      console.error(`No route or 404 handler found for path: ${path}`);
+      if (document.getElementById('view-container')) {
+        document.getElementById('view-container').innerHTML = `
+          <div class="card">
+            <div class="card-header">
+              <h1 class="card-title">Page Not Found</h1>
+            </div>
+            <div class="card-body">
+              <p>The page you requested could not be found.</p>
+              <button class="btn btn-primary" onclick="router.navigate('/')">Go Home</button>
+            </div>
           </div>
-          <div class="card-body">
-            <p>The page you requested could not be found.</p>
-            <button class="btn btn-primary" onclick="router.navigate('/')">Go Home</button>
-          </div>
-        </div>
-      `;
+        `;
+      }
     }
   },
   
@@ -90,6 +108,13 @@ const router = {
     }
     
     return params;
+  },
+
+  // Initialize popstate event listener
+  init: function() {
+    window.addEventListener('popstate', () => {
+      this.handleRoute();
+    });
   }
 };
 

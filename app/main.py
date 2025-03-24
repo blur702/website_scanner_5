@@ -106,10 +106,8 @@ class ConnectionManager:
 # Create connection manager instance
 manager = ConnectionManager()
 
-# Add WebSocket endpoint for scan progress updates
-@app.websocket("/api/ws/scan/{scan_id}")
-
 @app.on_event("startup")
+# Fixed: Removed duplicate WebSocket route declarations
 async def startup_event():
     logger.info(f"Starting Website Checker API on {settings.API_HOST}:{settings.API_PORT}")
     # Create necessary directories
@@ -137,26 +135,12 @@ else:
 async def websocket_endpoint(websocket: WebSocket, scan_id: str):
     await manager.connect(websocket, scan_id)
     try:
+        logger.info(f"WebSocket connection established for scan: {scan_id}")
         while True:
-            # Keep connection alive, actual messages will be sent via the broadcast method
-            await websocket.receive_text()
+            data = await websocket.receive_text()
+            logger.debug(f"Received data for scan {scan_id}: {data}")
     except WebSocketDisconnect:
-        manager.disconnect(websocket, scan_id)
-
-# Export the connection manager for use in services
-def get_connection_manager():
-    return manager
-
-
-# WebSocket endpoint for real-time scan updates
-@app.websocket("/api/ws/scan/{scan_id}")
-async def websocket_endpoint(websocket: WebSocket, scan_id: str):
-    await manager.connect(websocket, scan_id)
-    try:
-        while True:
-            # Keep connection alive, actual messages will be sent via the broadcast method
-            await websocket.receive_text()
-    except WebSocketDisconnect:
+        logger.info(f"WebSocket connection closed for scan: {scan_id}")
         manager.disconnect(websocket, scan_id)
 
 # Export the connection manager for use in services
