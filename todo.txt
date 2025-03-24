@@ -1,0 +1,41 @@
+# PROMPT: Create a comprehensive implementation roadmap for the Website Checker application
+
+You are a senior software architect tasked with completing the Website Checker application. Based on your expert analysis of the existing codebase, create a detailed implementation plan addressing all incomplete components.
+
+For each section below, identify critical issues that must be resolved to deliver a production-ready application:
+
+## Backend Services
+- Identify all incomplete service modules with specific function gaps
+- Prioritize which API endpoints need implementation first
+- Detail missing integration points between services
+- Specify necessary error handling improvements
+
+## Frontend Development
+- List all incomplete UI components and their dependencies
+- Identify missing view implementations
+- Specify UX improvements required for intuitive operation
+- Detail all frontend-backend integration requirements
+
+## Database & Data Management
+- Highlight schema completion requirements
+- Specify needed ORM relationship fixes
+- Identify performance optimization opportunities
+- Detail data retention and cleanup requirements
+
+## Testing Requirements
+- Specify unit tests required for all backend functions
+- Detail integration tests needed for end-to-end functionality
+- Identify performance testing scenarios
+- Create security testing requirements
+
+## Documentation Needs
+- List all required code documentation
+- Specify user documentation requirements
+- Detail API documentation needs
+
+## Deployment Considerations
+- Identify threading and concurrency implementation needs
+- Specify security considerations
+- Detail monitoring and logging requirements
+
+Your output should be an authoritative, actionable project plan that serves as a blueprint for completing the application. Emphasize the importance of thorough testing throughout development.
