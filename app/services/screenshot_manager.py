@@ -52,7 +52,7 @@ class ScreenshotManager:
             # For now, simulate a successful capture by creating an empty file
             filesize = 0
             capture_success = True
-            error_message = None
+            error_message = ""
 
             # Create an empty file to simulate the screenshot
             with open(path, 'w') as f:
