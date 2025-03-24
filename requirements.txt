@@ -6,3 +6,4 @@ pydantic
 aiohttp
 beautifulsoup4
 sqlalchemy
+pillow
