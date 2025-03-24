@@ -1,0 +1,110 @@
+:root {
+  /* Color Palette - Dark Theme */
+  --color-background: #121212;
+  --color-surface: #1e1e1e;
+  --color-surface-variant: #2d2d2d;
+  --color-primary: #7b68ee;        /* Medium slate blue */
+  --color-primary-hover: #8a77ff;
+  --color-primary-active: #6a57dd;
+  --color-secondary: #03dac6;      /* Teal accent */
+  --color-secondary-hover: #12e9d5;
+  --color-secondary-active: #00cbb7;
+  --color-accent: #ff4081;         /* Pink accent */
+  --color-error: #cf6679;          /* Red with proper contrast on dark */
+  --color-warning: #ffb74d;        /* Amber for warnings */
+  --color-success: #66bb6a;        /* Green for success indicators */
+  --color-info: #29b6f6;           /* Light blue for info */
+  
+  /* Text colors with good contrast */
+  --color-text-primary: rgba(255, 255, 255, 0.87);   /* High emphasis text */
+  --color-text-secondary: rgba(255, 255, 255, 0.6);  /* Medium emphasis text */
+  --color-text-disabled: rgba(255, 255, 255, 0.38);  /* Disabled text */
+  --color-text-on-primary: #ffffff;
+  --color-text-on-secondary: #000000;
+  
+  /* Border colors */
+  --color-border: rgba(255, 255, 255, 0.12);
+  --color-divider: rgba(255, 255, 255, 0.12);
+  
+  /* Overlay colors */
+  --color-overlay: rgba(0, 0, 0, 0.5);
+  --color-scrim: rgba(0, 0, 0, 0.32);
+  
+  /* Severities (for issue highlighting) */
+  --color-severity-critical: rgba(207, 102, 121, 0.8);  /* Red with alpha */
+  --color-severity-high: rgba(255, 183, 77, 0.8);      /* Amber with alpha */
+  --color-severity-medium: rgba(41, 182, 246, 0.8);    /* Blue with alpha */
+  --color-severity-low: rgba(102, 187, 106, 0.8);      /* Green with alpha */
+  
+  /* Typography */
+  --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-family-code: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', Consolas, 'Courier New', monospace;
+  
+  /* Font Sizes */
+  --font-size-xs: 0.75rem;   /* 12px */
+  --font-size-sm: 0.875rem;  /* 14px */
+  --font-size-md: 1rem;      /* 16px */
+  --font-size-lg: 1.125rem;  /* 18px */
+  --font-size-xl: 1.25rem;   /* 20px */
+  --font-size-2xl: 1.5rem;   /* 24px */
+  --font-size-3xl: 1.875rem; /* 30px */
+  --font-size-4xl: 2.25rem;  /* 36px */
+  
+  /* Font Weights */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;   /* 4px */
+  --spacing-sm: 0.5rem;    /* 8px */
+  --spacing-md: 1rem;      /* 16px */
+  --spacing-lg: 1.5rem;    /* 24px */
+  --spacing-xl: 2rem;      /* 32px */
+  --spacing-2xl: 3rem;     /* 48px */
+  
+  /* Borders */
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 16px;
+  --border-radius-full: 9999px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  /* Transitions */
+  --transition-fast: 150ms;
+  --transition-normal: 250ms;
+  --transition-slow: 350ms;
+  
+  /* Z-index levels */
+  --z-index-dropdown: 1000;
+  --z-index-sticky: 1020;
+  --z-index-fixed: 1030;
+  --z-index-modal-backdrop: 1040;
+  --z-index-modal: 1050;
+  --z-index-popover: 1060;
+  --z-index-tooltip: 1070;
+  
+  /* Layout */
+  --header-height: 64px;
+  --sidebar-width: 250px;
+  --sidebar-collapsed-width: 72px;
+  --content-max-width: 1200px;
+}
+
+/* Make text-size-adjust consistent with webkit prefix */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Apply box-sizing border-box to all elements */
+*, *::before, *::after {
+  box-sizing: border-box;
+}

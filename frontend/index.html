@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Checker</title>
+    <link rel="stylesheet" href="/css/normalize.css">
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/db-browser.css">
+    <link rel="stylesheet" href="/css/scan-view.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+</head>
+<body>
+    <div id="app" class="main-layout">
+        <header class="header">
+            <div class="logo">Website Checker</div>
+            <nav class="main-nav">
+                <!-- Navigation items will be added here -->
+            </nav>
+        </header>
+        <aside class="sidebar">
+            <!-- Sidebar content will be added here -->
+        </aside>
+        <main class="content">
+            <div id="view-container">
+                <!-- Views will be loaded here -->
+                <p>Loading...</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Loading overlay -->
+    <div id="loading-overlay" class="hidden">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading...</div>
+    </div>
+
+    <!-- Core scripts -->
+    <script src="/js/core/utils.js"></script>
+    <script src="/js/core/store.js"></script>
+    <script src="/js/core/router.js"></script>
+    <script src="/js/core/api.js"></script>
+    
+    <!-- Components -->
+    <script src="/js/components/Table.js"></script>
+    <script src="/js/components/Tabs.js"></script>
+    <script src="/js/components/Form.js"></script>
+    <script src="/js/components/Dropdown.js"></script>
+    <script src="/js/components/Modal.js"></script>
+    <script src="/js/components/Notification.js"></script>
+    <script src="/js/components/CodeViewer.js"></script>
+    <script src="/js/components/ScreenshotViewer.js"></script>
+    <script src="/js/components/Navigation.js"></script>
+    
+    <!-- Views -->
+    <script src="/js/views/HomeView.js"></script>
+    <script src="/js/views/ScanView.js"></script>
+    <script src="/js/views/ResultsView.js"></script>
+    <script src="/js/views/ReportView.js"></script>
+    <script src="/js/views/SearchView.js"></script>
+    <script src="/js/views/SettingsView.js"></script>
+    <script src="/js/views/DbBrowserView.js"></script>
+    
+    <!-- Main app -->
+    <script src="/js/app.js"></script>
+    <script>
+      console.log('Loading Website Checker frontend...');
+      document.addEventListener('DOMContentLoaded', function() {
+        // Initialize the navigation component
+        const navigation = new Navigation();
+        navigation.init();
+        
+        // Initialize default view
+        const homeView = new HomeView();
+        homeView.render();
+        
+        // Set up routes
+        router.addRoute('/', function() {
+            const homeView = new HomeView();
+            homeView.render();
+        });
+        
+        router.addRoute('/scan', function() {
+            const scanView = new ScanView();
+            scanView.render();
+        });
+        
+        // Initialize router
+        router.handleRoute();
+      });
+    </script>
+</body>
+</html>
