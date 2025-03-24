@@ -3,11 +3,9 @@ from app.services.search_service import SearchService
 from app.services.regex_service import RegexService
 from app.services.management_service import ManagementService
 from app.services.db_browser_service import DbBrowserService
-from app.services.screenshot_manager import ScreenshotManager
 from app.core.database import get_db
 from functools import lru_cache
 
-# Service dependencies
 @lru_cache()
 def get_scan_service():
     """
@@ -47,11 +45,3 @@ def get_db_browser_service():
     Uses LRU cache to maintain singleton pattern.
     """
     return DbBrowserService(next(get_db()))
-
-@lru_cache()
-def get_screenshot_manager():
-    """
-    Get or create a ScreenshotManager instance.
-    Uses LRU cache to maintain singleton pattern.
-    """
-    return ScreenshotManager(next(get_db()))

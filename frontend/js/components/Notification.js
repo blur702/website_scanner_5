@@ -21,8 +21,7 @@ const Notification = {
         const notification = document.createElement('div');
         notification.id = id;
         notification.className = `notification notification-${type}`;
-        notification.textContent = message;
-        notification.setAttribute('role', 'alert');
+        notification.innerHTML = message;
         
         container.appendChild(notification);
         

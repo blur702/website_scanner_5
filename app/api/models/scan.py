@@ -76,11 +76,6 @@ class ScanCreate(BaseModel):
         return str(v)
 
 class ScanResponse(BaseModel):
-    """
-    Response model for scan creation.
-    
-    Contains basic information about the created scan.
-    """
     uuid: str
     created_at: datetime
     status: ScanStatus = ScanStatus.PENDING

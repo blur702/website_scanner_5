@@ -2,11 +2,9 @@ import logging
 from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.websockets import WebSocketDisconnect, WebSocket
 from fastapi.responses import JSONResponse, RedirectResponse
 import time
 import os
-import json
 
 from app.api.routes import scan_router, search_router, regex_router, management_router, db_browser_router
 from app.core.config import settings
@@ -24,8 +22,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="Website Checker API",
     description="API for checking websites for errors, performance issues, and more",
-    version="0.1.0", 
-    docs_url="/api/docs"
+    version="0.1.0",
 )
 
 # Add CORS middleware
@@ -83,29 +80,6 @@ async def root_redirect():
     return RedirectResponse("/index.html")
 
 # Startup event
-# WebSocket connection manager
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections = {}
-
-    async def connect(self, websocket: WebSocket, scan_id: str):
-        await websocket.accept()
-        if scan_id not in self.active_connections:
-            self.active_connections[scan_id] = []
-        self.active_connections[scan_id].append(websocket)
-
-    def disconnect(self, websocket: WebSocket, scan_id: str):
-        if scan_id in self.active_connections:
-            self.active_connections[scan_id].remove(websocket)
-
-    async def broadcast(self, scan_id: str, message: dict):
-        if scan_id in self.active_connections:
-            for connection in self.active_connections[scan_id]:
-                await connection.send_json(message)
-
-# Create connection manager instance
-manager = ConnectionManager()
-
 @app.on_event("startup")
 async def startup_event():
     logger.info(f"Starting Website Checker API on {settings.API_HOST}:{settings.API_PORT}")
@@ -128,22 +102,3 @@ if os.path.exists(static_dir):
     app.mount("/", StaticFiles(directory=static_dir, html=True), name="frontend")
 else:
     logger.warning(f"Frontend directory not found at: {static_dir}")
-
-# WebSocket endpoint for real-time scan updates
-@app.websocket("/api/ws/scan/{scan_id}")
-async def websocket_endpoint(websocket: WebSocket, scan_id: str):
-    await manager.connect(websocket, scan_id)
-    try:
-        logger.info(f"WebSocket connection established for scan: {scan_id}")
-        while True:
-            data = await websocket.receive_text()
-            logger.debug(f"Received data for scan {scan_id}: {data}")
-    except WebSocketDisconnect:
-        logger.info(f"WebSocket connection closed for scan: {scan_id}")
-        manager.disconnect(websocket, scan_id)
-
-# Export the connection manager for use in services
-def get_connection_manager():
-    return manager
-
-
