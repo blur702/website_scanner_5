@@ -1,0 +1,275 @@
+/* Code Viewer Component */
+.code-viewer {
+    background-color: var(--bg-primary);
+    border-radius: var(--border-radius);
+    -webkit-box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-sm);
+    font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    overflow: hidden;
+}
+
+/* Header */
+.code-viewer-header {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    -webkit-justify-content: space-between;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.code-viewer-language {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.code-viewer-copy {
+    padding: 0.375rem;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    -webkit-transition: all 0.2s ease;
+    transition: all 0.2s ease;
+}
+
+.code-viewer-copy:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-tertiary);
+}
+
+.code-viewer-copy svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+}
+
+.code-viewer-copy .hidden {
+    display: none;
+}
+
+/* Content Area */
+.code-viewer-content {
+    position: relative;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.code-viewer-scroll {
+    display: -webkit-flex;
+    display: flex;
+    min-width: 100%;
+}
+
+/* Line Numbers */
+.line-numbers {
+    -webkit-flex-shrink: 0;
+    flex-shrink: 0;
+    padding: 1rem 0;
+    background-color: var(--bg-secondary);
+    border-right: 1px solid var(--border-color);
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.line-number {
+    display: block;
+    padding: 0 0.75rem;
+    color: var(--text-secondary);
+    text-align: right;
+    font-size: 0.75rem;
+}
+
+/* Code Content */
+.code-viewer-pre {
+    -webkit-flex: 1;
+    flex: 1;
+    margin: 0;
+    padding: 1rem;
+    overflow-x: auto;
+}
+
+.code-viewer-pre code {
+    display: block;
+    font-family: inherit;
+    -moz-tab-size: 4;
+    -o-tab-size: 4;
+    tab-size: 4;
+}
+
+.line {
+    display: block;
+    min-height: 1.5em;
+}
+
+/* Wrap Lines Option */
+.wrap-lines .code-viewer-pre code {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Syntax Highlighting - Light Theme */
+[data-theme="light"] {
+    --code-keyword: #d73a49;
+    --code-string: #22863a;
+    --code-number: #005cc5;
+    --code-comment: #6a737d;
+    --code-function: #6f42c1;
+    --code-tag: #22863a;
+    --code-attr-name: #6f42c1;
+    --code-attr-value: #032f62;
+    --code-property: #005cc5;
+    --code-unit: #005cc5;
+    --code-selector: #22863a;
+    --code-value: #032f62;
+}
+
+/* Syntax Highlighting - Dark Theme */
+[data-theme="dark"] {
+    --code-keyword: #ff7b72;
+    --code-string: #a5d6ff;
+    --code-number: #79c0ff;
+    --code-comment: #8b949e;
+    --code-function: #d2a8ff;
+    --code-tag: #7ee787;
+    --code-attr-name: #d2a8ff;
+    --code-attr-value: #79c0ff;
+    --code-property: #79c0ff;
+    --code-unit: #79c0ff;
+    --code-selector: #7ee787;
+    --code-value: #79c0ff;
+}
+
+/* Token Styles */
+.token.keyword { color: var(--code-keyword); }
+.token.string { color: var(--code-string); }
+.token.number { color: var(--code-number); }
+.token.comment { color: var(--code-comment); font-style: italic; }
+.token.function { color: var(--code-function); }
+.token.tag { color: var(--code-tag); }
+.token.attr-name { color: var(--code-attr-name); }
+.token.attr-value { color: var(--code-attr-value); }
+.token.property { color: var(--code-property); }
+.token.unit { color: var(--code-unit); }
+.token.selector { color: var(--code-selector); }
+.token.value { color: var(--code-value); }
+
+/* Selection Style */
+.code-viewer-pre code ::selection {
+    background-color: var(--color-primary-light);
+}
+
+.code-viewer-pre code ::-moz-selection {
+    background-color: var(--color-primary-light);
+}
+
+/* Mobile Optimization */
+@media (max-width: 640px) {
+    .code-viewer {
+        font-size: 0.8125rem;
+    }
+
+    .code-viewer-header {
+        padding: 0.5rem 0.75rem;
+    }
+
+    .line-numbers {
+        padding: 0.75rem 0;
+    }
+
+    .line-number {
+        padding: 0 0.5rem;
+    }
+
+    .code-viewer-pre {
+        padding: 0.75rem;
+    }
+}
+
+/* High Contrast Mode */
+@media (forced-colors: active) {
+    .code-viewer {
+        border: 1px solid CanvasText;
+    }
+
+    .code-viewer-header {
+        border-bottom: 1px solid CanvasText;
+    }
+
+    .line-numbers {
+        border-right: 1px solid CanvasText;
+    }
+
+    .code-viewer-copy:focus {
+        outline: 2px solid CanvasText;
+    }
+
+    /* Reset syntax highlighting */
+    .token {
+        color: CanvasText !important;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .code-viewer-copy {
+        -webkit-transition: none;
+        transition: none;
+    }
+}
+
+/* RTL Support */
+[dir="rtl"] .line-numbers {
+    border-right: none;
+    border-left: 1px solid var(--border-color);
+}
+
+[dir="rtl"] .line-number {
+    text-align: left;
+}
+
+/* Print Styles */
+@media print {
+    .code-viewer {
+        -webkit-box-shadow: none;
+        box-shadow: none;
+        border: 1px solid var(--border-color);
+    }
+
+    .code-viewer-copy {
+        display: none;
+    }
+
+    .code-viewer-pre {
+        white-space: pre-wrap;
+    }
+}
+
+/* Animation */
+@-webkit-keyframes copy-success {
+    0% { -webkit-transform: scale(0.8); opacity: 0; }
+    100% { -webkit-transform: scale(1); opacity: 1; }
+}
+
+@keyframes copy-success {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.code-viewer-copy .check-icon:not(.hidden) {
+    -webkit-animation: copy-success 0.2s ease forwards;
+    animation: copy-success 0.2s ease forwards;
+}

@@ -1,0 +1,306 @@
+/* Notification Component */
+.notification-container {
+    position: fixed;
+    z-index: var(--z-toast);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+    pointer-events: none;
+}
+
+/* Container Positions */
+.notification-container.top-right {
+    top: 0;
+    right: 0;
+    align-items: flex-end;
+}
+
+.notification-container.top-left {
+    top: 0;
+    left: 0;
+    align-items: flex-start;
+}
+
+.notification-container.bottom-right {
+    bottom: 0;
+    right: 0;
+    align-items: flex-end;
+}
+
+.notification-container.bottom-left {
+    bottom: 0;
+    left: 0;
+    align-items: flex-start;
+}
+
+.notification-container.top-center {
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    align-items: center;
+}
+
+.notification-container.bottom-center {
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    align-items: center;
+}
+
+/* Individual Notification */
+.notification {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    min-width: 300px;
+    max-width: 480px;
+    background-color: var(--bg-primary);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    pointer-events: auto;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease;
+}
+
+.notification.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Type-specific styles */
+.notification.info {
+    border-left: 4px solid var(--color-info);
+}
+
+.notification.success {
+    border-left: 4px solid var(--color-success);
+}
+
+.notification.warning {
+    border-left: 4px solid var(--color-warning);
+}
+
+.notification.error {
+    border-left: 4px solid var(--color-error);
+}
+
+/* Icons */
+.notification-icon {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+}
+
+.notification.info .notification-icon {
+    color: var(--color-info);
+}
+
+.notification.success .notification-icon {
+    color: var(--color-success);
+}
+
+.notification.warning .notification-icon {
+    color: var(--color-warning);
+}
+
+.notification.error .notification-icon {
+    color: var(--color-error);
+}
+
+/* Content */
+.notification-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.notification-title {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.notification-message {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
+/* Close Button */
+.notification-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 0.25rem;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.notification-close:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-secondary);
+}
+
+.notification-close svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    stroke-width: 2;
+}
+
+/* Actions */
+.notification-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.notification-action {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-primary);
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.notification-action:hover {
+    color: var(--color-primary-dark);
+    background-color: var(--bg-secondary);
+    border-color: var(--color-primary);
+}
+
+/* Progress Bar */
+.notification-progress {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 3px;
+    background-color: var(--bg-secondary);
+    overflow: hidden;
+}
+
+.notification-progress .progress-bar {
+    width: 100%;
+    height: 100%;
+    background-color: currentColor;
+    opacity: 0.2;
+}
+
+/* RTL Support */
+[dir="rtl"] .notification {
+    transform: translateX(-100%);
+}
+
+[dir="rtl"] .notification.show {
+    transform: translateX(0);
+}
+
+[dir="rtl"] .notification-close {
+    right: auto;
+    left: 0.5rem;
+}
+
+[dir="rtl"] .notification {
+    border-left: none;
+    border-right: 4px solid transparent;
+}
+
+[dir="rtl"] .notification.info { border-right-color: var(--color-info); }
+[dir="rtl"] .notification.success { border-right-color: var(--color-success); }
+[dir="rtl"] .notification.warning { border-right-color: var(--color-warning); }
+[dir="rtl"] .notification.error { border-right-color: var(--color-error); }
+
+/* Mobile Optimization */
+@media (max-width: 640px) {
+    .notification-container {
+        padding: 0.5rem;
+        width: 100%;
+    }
+
+    .notification {
+        min-width: 0;
+        width: 100%;
+        max-width: none;
+    }
+
+    .notification-container.top-center,
+    .notification-container.bottom-center {
+        left: 0;
+        transform: none;
+        width: 100%;
+    }
+
+    .notification-actions {
+        flex-direction: column;
+    }
+
+    .notification-action {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* Dark Theme */
+[data-theme="dark"] .notification {
+    background-color: var(--bg-primary-dark);
+}
+
+/* High Contrast Mode */
+@media (forced-colors: active) {
+    .notification {
+        border: 1px solid CanvasText;
+    }
+
+    .notification-close {
+        border: 1px solid transparent;
+    }
+
+    .notification-close:hover {
+        border-color: CanvasText;
+    }
+
+    .notification-action {
+        border: 1px solid CanvasText;
+    }
+
+    .notification-progress {
+        border: 1px solid CanvasText;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .notification,
+    .notification-close,
+    .notification-action {
+        transition: none;
+    }
+
+    .notification-progress .progress-bar {
+        transition: none;
+    }
+}
+
+/* Print */
+@media print {
+    .notification-container {
+        display: none !important;
+    }
+}

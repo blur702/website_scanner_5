@@ -1,168 +1,220 @@
-import logging
 import os
+import logging
 import json
+from typing import Dict, Any, Optional, List
 from datetime import datetime
-from typing import List, Dict, Any, Optional
-import jinja2
+from jinja2 import Environment, FileSystemLoader
+from sqlalchemy.orm import Session
 
 from app.models.metadata import Metadata
 from app.models.resource import Resource
 from app.models.validation import Validation
+from app.models.screenshot import Screenshot
 from app.models.external_link import ExternalLink
-from app.core.exceptions import NotFoundException, BadRequestException
+from app.api.models.scan import ResourceType, SeverityLevel, ScanMode, ResourceStatus
 
 logger = logging.getLogger(__name__)
 
 class ReportGenerator:
-    """
-    Generates comprehensive reports in various formats (HTML, PDF, CSV, JSON).
-    """
-    
-    def __init__(self, db_session):
-        """Initialize the report generator with database session."""
+    """Generate comprehensive scan reports in various formats."""
+
+    def __init__(self, scan_uuid: str, db_session: Session, templates_dir: str = None):
+        """Initialize report generator."""
+        self.scan_uuid = scan_uuid
         self.db_session = db_session
-        
-        # Set up Jinja2 template environment
-        template_dir = os.path.join(os.path.dirname(__file__), '..', 'templates')
-        self.template_env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(template_dir),
-            autoescape=jinja2.select_autoescape(['html', 'xml'])
+        self.templates_dir = templates_dir or os.path.join(os.path.dirname(__file__), '../templates')
+        self.jinja_env = Environment(
+            loader=FileSystemLoader(self.templates_dir),
+            autoescape=True
         )
         
-        logger.info("ReportGenerator initialized")
-    
-    async def generate_html_report(self, scan_uuid: str, sections: Optional[List[str]] = None) -> str:
-        """
-        Generate an HTML report for a scan.
+    async def generate_report(self, format: str = 'html', sections: Optional[List[str]] = None) -> str:
+        """Generate a report in the specified format."""
+        scan_data = await self._collect_scan_data()
         
-        Args:
-            scan_uuid: UUID of the scan
-            sections: Optional list of sections to include
-            
-        Returns:
-            HTML report content
-        
-        Raises:
-            NotFoundException: If the scan doesn't exist
-        """
-        logger.info(f"Generating HTML report for scan {scan_uuid}")
-        
-        # Get scan metadata
-        scan = self.db_session.query(Metadata).filter(Metadata.uuid == scan_uuid).first()
-        if not scan:
-            logger.warning(f"Scan not found: {scan_uuid}")
-            raise NotFoundException("Scan", scan_uuid)
-        
-        # Collect data for the report
-        report_data = await self._collect_report_data(scan, sections)
-        
-        # Render the HTML template
-        template = self.template_env.get_template('report_html.jinja2')
-        html_content = template.render(
-            scan=scan,
-            data=report_data,
-            generated_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        )
-        
-        # Save the report to a file
-        report_path = os.path.join(scan.cache_path, "reports", "report.html")
-        os.makedirs(os.path.dirname(report_path), exist_ok=True)
-        
-        with open(report_path, 'w', encoding='utf-8') as f:
-            f.write(html_content)
-        
-        logger.info(f"HTML report generated and saved to {report_path}")
-        return html_content
-    
-    async def generate_json_report(self, scan_uuid: str, sections: Optional[List[str]] = None) -> Dict[str, Any]:
-        """
-        Generate a JSON report for a scan.
-        
-        Args:
-            scan_uuid: UUID of the scan
-            sections: Optional list of sections to include
-            
-        Returns:
-            JSON report data
-        
-        Raises:
-            NotFoundException: If the scan doesn't exist
-        """
-        logger.info(f"Generating JSON report for scan {scan_uuid}")
-        
-        # Get scan metadata
-        scan = self.db_session.query(Metadata).filter(Metadata.uuid == scan_uuid).first()
-        if not scan:
-            logger.warning(f"Scan not found: {scan_uuid}")
-            raise NotFoundException("Scan", scan_uuid)
-        
-        # Collect data for the report
-        report_data = await self._collect_report_data(scan, sections)
-        
-        # Create the JSON structure
-        json_report = {
-            "scan_id": scan.uuid,
-            "url": scan.original_url,
-            "mode": scan.scan_mode,
-            "start_time": scan.start_time.isoformat() if scan.start_time else None,
-            "end_time": scan.end_time.isoformat() if scan.end_time else None,
-            "status": scan.status,
-            "data": report_data,
-            "generated_at": datetime.now().isoformat()
-        }
-        
-        # Save the report to a file
-        report_path = os.path.join(scan.cache_path, "reports", "report.json")
-        os.makedirs(os.path.dirname(report_path), exist_ok=True)
-        
-        with open(report_path, 'w', encoding='utf-8') as f:
-            json.dump(json_report, f, indent=2)
-        
-        logger.info(f"JSON report generated and saved to {report_path}")
-        return json_report
-    
-    async def _collect_report_data(self, scan: Metadata, sections: Optional[List[str]] = None) -> Dict[str, Any]:
-        """
-        Collect data for the report based on selected sections.
-        
-        Args:
-            scan: Scan metadata
-            sections: Optional list of sections to include
-            
-        Returns:
-            Dictionary with report data
-        """
-        # Define default sections to include
-        all_sections = ["overview", "resources", "validation", "external_links", "screenshots", "performance"]
-        
-        # Filter sections if provided
-        if sections:
-            selected_sections = [s for s in sections if s in all_sections]
+        if format == 'html':
+            return await self._generate_html_report(scan_data, sections)
+        elif format == 'json':
+            return await self._generate_json_report(scan_data, sections)
+        elif format == 'summary':
+            return await self._generate_summary_report(scan_data)
         else:
-            selected_sections = all_sections
+            raise ValueError(f"Unsupported report format: {format}")
+            
+    async def _collect_scan_data(self) -> Dict[str, Any]:
+        """Collect all relevant scan data."""
+        # Get scan metadata
+        scan = self.db_session.query(Metadata).filter(
+            Metadata.uuid == self.scan_uuid
+        ).first()
         
-        report_data = {}
+        if not scan:
+            raise ValueError(f"Scan {self.scan_uuid} not found")
+            
+        # Get resources statistics
+        resources = self.db_session.query(Resource).filter(
+            Resource.uuid == self.scan_uuid
+        ).all()
         
-        # Overview section - always included
-        report_data["overview"] = {
-            "url": scan.original_url,
-            "scan_mode": scan.scan_mode,
-            "start_time": scan.start_time,
-            "end_time": scan.end_time,
-            "duration": (scan.end_time - scan.start_time).total_seconds() if scan.end_time else None,
-            "resource_count": scan.resource_count,
-            "page_count": scan.page_count,
-            "total_download_size": scan.total_download_size,
-            "external_link_count": scan.external_link_count,
-            "external_link_errors": scan.external_link_errors
+        resource_stats = {
+            "total": len(resources),
+            "by_type": self._count_by_field(resources, "resource_type"),
+            "by_status": self._count_by_field(resources, "download_status"),
+            "external": len([r for r in resources if r.is_external]),
+            "internal": len([r for r in resources if not r.is_external])
         }
         
-        # Include other sections based on selection
-        if "resources" in selected_sections:
-            report_data["resources"] = await self._collect_resources_data(scan)
+        # Get validation issues
+        validation_issues = self.db_session.query(Validation).filter(
+            Validation.uuid == self.scan_uuid
+        ).all()
         
-        if "validation" in selected_sections:
-            report_data["validation"] = await self._collect_validation_data(scan)
+        validation_stats = {
+            "total": len(validation_issues),
+            "by_severity": self._count_by_field(validation_issues, "severity"),
+            "by_group": self._count_by_field(validation_issues, "test_group")
+        }
         
-        if "external_links" in selected_sections:
-            report_data["external_links"] = await self._collect_external_links_data(scan)
+        # Get screenshots
+        screenshots = self.db_session.query(Screenshot).filter(
+            Screenshot.uuid == self.scan_uuid
+        ).all()
+        
+        # Get external links
+        external_links = self.db_session.query(ExternalLink).filter(
+            ExternalLink.uuid == self.scan_uuid
+        ).all()
+        
+        external_link_stats = {
+            "total": len(external_links),
+            "broken": len([l for l in external_links if l.status_code >= 400]),
+            "by_status": self._count_by_field(external_links, "status_code")
+        }
+        
+        return {
+            "metadata": {
+                "uuid": scan.uuid,
+                "url": scan.original_url,
+                "mode": scan.scan_mode,
+                "start_time": scan.start_time,
+                "end_time": scan.end_time,
+                "duration": (scan.end_time - scan.start_time).total_seconds(),
+                "status": scan.status,
+                "config": scan.config
+            },
+            "resources": {
+                "stats": resource_stats,
+                "items": resources
+            },
+            "validation": {
+                "stats": validation_stats,
+                "items": validation_issues
+            },
+            "screenshots": {
+                "total": len(screenshots),
+                "items": screenshots
+            },
+            "external_links": {
+                "stats": external_link_stats,
+                "items": external_links
+            }
+        }
+        
+    def _count_by_field(self, items: list, field: str) -> Dict[str, int]:
+        """Count items by a specified field."""
+        counts = {}
+        for item in items:
+            value = getattr(item, field)
+            counts[value] = counts.get(value, 0) + 1
+        return counts
+        
+    async def _generate_html_report(self, data: Dict[str, Any], sections: Optional[List[str]] = None) -> str:
+        """Generate HTML report."""
+        # Load main template
+        template = self.jinja_env.get_template('report_html.jinja2')
+        
+        # Prepare section data
+        sections_data = {}
+        
+        if not sections or 'overview' in sections:
+            overview_template = self.jinja_env.get_template('report_sections/overview.jinja2')
+            sections_data['overview'] = overview_template.render(
+                metadata=data['metadata'],
+                resource_stats=data['resources']['stats'],
+                validation_stats=data['validation']['stats']
+            )
+            
+        if not sections or 'resources' in sections:
+            resources_template = self.jinja_env.get_template('report_sections/resources.jinja2')
+            sections_data['resources'] = resources_template.render(
+                stats=data['resources']['stats'],
+                resources=data['resources']['items']
+            )
+            
+        if not sections or 'validation' in sections:
+            validation_template = self.jinja_env.get_template('report_sections/validation.jinja2')
+            sections_data['validation'] = validation_template.render(
+                stats=data['validation']['stats'],
+                issues=data['validation']['items']
+            )
+            
+        if not sections or 'screenshots' in sections:
+            screenshots_template = self.jinja_env.get_template('report_sections/screenshots.jinja2')
+            sections_data['screenshots'] = screenshots_template.render(
+                screenshots=data['screenshots']['items']
+            )
+            
+        if not sections or 'external_links' in sections:
+            links_template = self.jinja_env.get_template('report_sections/external_links.jinja2')
+            sections_data['external_links'] = links_template.render(
+                stats=data['external_links']['stats'],
+                links=data['external_links']['items']
+            )
+            
+        # Render full report
+        return template.render(
+            scan=data['metadata'],
+            sections=sections_data
+        )
+        
+    async def _generate_json_report(self, data: Dict[str, Any], sections: Optional[List[str]] = None) -> str:
+        """Generate JSON report."""
+        # Filter sections if specified
+        if sections:
+            filtered_data = {
+                "metadata": data["metadata"]
+            }
+            for section in sections:
+                if section in data:
+                    filtered_data[section] = data[section]
+            report_data = filtered_data
+        else:
+            report_data = data
+            
+        # Convert datetime objects to ISO format
+        return json.dumps(report_data, default=str, indent=2)
+        
+    async def _generate_summary_report(self, data: Dict[str, Any]) -> str:
+        """Generate a brief summary report."""
+        summary = {
+            "uuid": data["metadata"]["uuid"],
+            "url": data["metadata"]["url"],
+            "mode": data["metadata"]["mode"],
+            "duration_seconds": data["metadata"]["duration"],
+            "resources": {
+                "total": data["resources"]["stats"]["total"],
+                "html": data["resources"]["stats"]["by_type"].get(ResourceType.HTML.value, 0),
+                "failed": data["resources"]["stats"]["by_status"].get(ResourceStatus.ERROR.value, 0)
+            },
+            "validation": {
+                "total": data["validation"]["stats"]["total"],
+                "critical": data["validation"]["stats"]["by_severity"].get(SeverityLevel.CRITICAL.value, 0),
+                "high": data["validation"]["stats"]["by_severity"].get(SeverityLevel.HIGH.value, 0)
+            },
+            "external_links": {
+                "total": data["external_links"]["stats"]["total"],
+                "broken": data["external_links"]["stats"]["broken"]
+            }
+        }
+        
+        return json.dumps(summary, indent=2)

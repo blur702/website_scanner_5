@@ -48,11 +48,6 @@ def get_db_context():
     db = SessionLocal()
     try:
         yield db
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        logger.exception("Database session error: %s", str(e))
-        raise
     finally:
         db.close()
 
@@ -73,6 +68,8 @@ def init_db():
         
         # Create all tables
         Base.metadata.create_all(bind=engine)
-        logger.info("Database tables initialized")
+        logger.info("Database tables created successfully")
+        return True
     except Exception as e:
-        logger.error(f"Failed to initialize database: {str(e)}")
+        logger.error(f"Error creating database tables: {str(e)}")
+        return False

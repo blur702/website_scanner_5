@@ -1,0 +1,272 @@
+/* Form Component Styles */
+
+/* Form Container */
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+/* Form Groups */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 640px) {
+    .form-row {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+
+/* Labels */
+.form-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.form-label.required::after {
+    content: "*";
+    color: var(--color-error);
+    margin-left: 0.25rem;
+}
+
+/* Input Fields */
+.form-control {
+    display: block;
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    transition: all 0.2s ease;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.form-control:hover {
+    border-color: var(--color-primary);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+/* Select Fields */
+select.form-control {
+    padding-right: 2rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 1.25rem;
+}
+
+/* Textarea */
+textarea.form-control {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* Checkboxes and Radios */
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+    cursor: pointer;
+}
+
+.form-check input[type="checkbox"],
+.form-check input[type="radio"] {
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+    cursor: pointer;
+}
+
+.form-check-label {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+/* Help Text */
+.form-help {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+/* Validation States */
+.form-control.is-invalid {
+    border-color: var(--color-error);
+    padding-right: calc(1.5em + 0.75rem);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23dc3545' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cline x1='12' y1='8' x2='12' y2='12'%3E%3C/line%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'%3E%3C/line%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+.form-control.is-valid {
+    border-color: var(--color-success);
+    padding-right: calc(1.5em + 0.75rem);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2328a745' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+.form-control.is-invalid:focus {
+    border-color: var(--color-error);
+    box-shadow: 0 0 0 3px var(--color-error-light);
+}
+
+.form-error {
+    font-size: 0.75rem;
+    color: var(--color-error);
+    margin-top: 0.25rem;
+}
+
+/* Disabled State */
+.form-control:disabled,
+.form-control[readonly] {
+    background-color: var(--bg-secondary);
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Loading State */
+.form-control.is-loading {
+    padding-right: calc(1.5em + 0.75rem);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='12' y1='2' x2='12' y2='6'%3E%3C/line%3E%3Cline x1='12' y1='18' x2='12' y2='22'%3E%3C/line%3E%3Cline x1='4.93' y1='4.93' x2='7.76' y2='7.76'%3E%3C/line%3E%3Cline x1='16.24' y1='16.24' x2='19.07' y2='19.07'%3E%3C/line%3E%3Cline x1='2' y1='12' x2='6' y2='12'%3E%3C/line%3E%3Cline x1='18' y1='12' x2='22' y2='12'%3E%3C/line%3E%3Cline x1='4.93' y1='19.07' x2='7.76' y2='16.24'%3E%3C/line%3E%3Cline x1='16.24' y1='7.76' x2='19.07' y2='4.93'%3E%3C/line%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    animation: rotate 1s linear infinite;
+}
+
+/* Sizes */
+.form-control-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.form-control-lg {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+}
+
+/* Input Groups */
+.input-group {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+}
+
+.input-group .form-control {
+    flex: 1;
+    min-width: 0;
+}
+
+.input-group-prepend,
+.input-group-append {
+    display: flex;
+}
+
+.input-group-text {
+    display: flex;
+    align-items: center;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.input-group-prepend .input-group-text {
+    border-right: 0;
+    border-radius: var(--border-radius) 0 0 var(--border-radius);
+}
+
+.input-group-append .input-group-text {
+    border-left: 0;
+    border-radius: 0 var(--border-radius) var(--border-radius) 0;
+}
+
+/* File Input */
+.form-control[type="file"] {
+    padding: 0.375rem;
+}
+
+.form-control[type="file"]::file-selector-button {
+    padding: 0.25rem 0.75rem;
+    margin: 0 0.75rem 0 0;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.form-control[type="file"]::file-selector-button:hover {
+    background-color: var(--bg-tertiary);
+}
+
+/* Animations */
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Dark Theme Adjustments */
+[data-theme="dark"] .form-control {
+    background-color: var(--bg-primary-dark);
+    border-color: var(--border-color-dark);
+}
+
+[data-theme="dark"] .form-control:disabled {
+    background-color: var(--bg-secondary-dark);
+}
+
+/* High Contrast Mode */
+@media (forced-colors: active) {
+    .form-control {
+        border: 1px solid CanvasText;
+    }
+
+    .form-control:focus {
+        outline: 2px solid Highlight;
+    }
+
+    .form-error {
+        color: LinkText;
+    }
+}
+
+/* RTL Support */
+[dir="rtl"] .form-control {
+    text-align: right;
+}
+
+[dir="rtl"] select.form-control {
+    padding-right: 0.875rem;
+    padding-left: 2rem;
+    background-position: left 0.5rem center;
+}

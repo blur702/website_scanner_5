@@ -1,98 +1,131 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Website Checker</title>
+    <meta name="description" content="Website Analysis Tool - Scan and analyze websites for SEO, accessibility, and more">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="msapplication-navbutton-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#3b82f6">
+    <meta name="msapplication-TileColor" content="#3b82f6">
+    <title>Website Checker - Website Analysis Tool</title>
+
+    <!-- Preload Critical Assets -->
+    <link rel="preload" href="/css/variables.css" as="style">
+    <link rel="preload" href="/css/theme-colors.css" as="style">
+    <link rel="preload" href="/css/app.css" as="style">
+    <link rel="preload" href="/js/app.js" as="script" crossorigin="anonymous">
+
+    <!-- Favicons -->
+    <link rel="icon" href="/assets/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- Styles -->
     <link rel="stylesheet" href="/css/normalize.css">
     <link rel="stylesheet" href="/css/variables.css">
-    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/theme-colors.css">
+    <link rel="stylesheet" href="/css/app.css">
     <link rel="stylesheet" href="/css/components.css">
-    <link rel="stylesheet" href="/css/db-browser.css">
-    <link rel="stylesheet" href="/css/scan-view.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="stylesheet" href="/css/form.css">
+    <link rel="stylesheet" href="/css/table.css">
+    <link rel="stylesheet" href="/css/modal.css">
+    <link rel="stylesheet" href="/css/dropdown.css">
+    <link rel="stylesheet" href="/css/tabs.css">
+    <link rel="stylesheet" href="/css/notification.css">
+    <link rel="stylesheet" href="/css/loader.css">
+    <link rel="stylesheet" href="/css/error-pages.css">
 </head>
 <body>
-    <div id="app" class="main-layout">
-        <header class="header">
-            <div class="logo">Website Checker</div>
-            <nav class="main-nav">
-                <!-- Navigation items will be added here -->
-            </nav>
+    <div id="app" class="app">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="container">
+                <nav class="main-nav">
+                    <a href="/" class="nav-logo">
+                        <img src="/assets/logo.svg" alt="Website Checker" width="32" height="32">
+                        <span>Website Checker</span>
+                    </a>
+                    
+                    <div class="nav-links">
+                        <a href="/scan" class="nav-link">New Scan</a>
+                        <a href="/results" class="nav-link">Results</a>
+                        <a href="/search" class="nav-link">Search</a>
+                        <a href="/browser" class="nav-link">Database</a>
+                    </div>
+
+                    <div class="nav-actions">
+                        <button id="searchButton" class="btn btn-secondary" title="Search (Ctrl + K)">
+                            <svg viewBox="0 0 24 24" class="icon">
+                                <circle cx="11" cy="11" r="8"/>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                            </svg>
+                            <span>Search</span>
+                        </button>
+
+                        <button id="themeToggle" class="btn btn-secondary" title="Toggle theme">
+                            <svg viewBox="0 0 24 24" class="icon light-icon">
+                                <circle cx="12" cy="12" r="5"/>
+                                <line x1="12" y1="1" x2="12" y2="3"/>
+                                <line x1="12" y1="21" x2="12" y2="23"/>
+                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                                <line x1="1" y1="12" x2="3" y2="12"/>
+                                <line x1="21" y1="12" x2="23" y2="12"/>
+                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                            </svg>
+                            <svg viewBox="0 0 24 24" class="icon dark-icon">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                            </svg>
+                        </button>
+
+                        <div class="dropdown">
+                            <button id="userMenu" class="btn btn-secondary">
+                                <span class="avatar">JD</span>
+                            </button>
+                        </div>
+                    </div>
+                </nav>
+            </div>
         </header>
-        <aside class="sidebar">
-            <!-- Sidebar content will be added here -->
-        </aside>
-        <main class="content">
-            <div id="view-container">
-                <!-- Views will be loaded here -->
-                <p>Loading...</p>
+
+        <!-- Main Content -->
+        <main class="app-main">
+            <aside id="sidebar" class="app-sidebar">
+                <!-- Sidebar content will be dynamically inserted -->
+            </aside>
+
+            <div id="content" class="app-content">
+                <!-- View content will be dynamically inserted -->
             </div>
         </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="container">
+                <p>&copy; 2025 Website Checker. All rights reserved.</p>
+            </div>
+        </footer>
     </div>
 
-    <!-- Loading overlay -->
-    <div id="loading-overlay" class="hidden">
-        <div class="spinner"></div>
-        <div class="loading-text">Loading...</div>
+    <!-- Error Boundary -->
+    <div id="errorBoundary" class="error-boundary hidden">
+        <!-- Error content will be dynamically inserted -->
     </div>
 
-    <!-- Core scripts -->
-    <script src="/js/core/utils.js"></script>
-    <script src="/js/core/store.js"></script>
-    <script src="/js/core/router.js"></script>
-    <script src="/js/core/api.js"></script>
-    
-    <!-- Components -->
-    <script src="/js/components/Table.js"></script>
-    <script src="/js/components/Tabs.js"></script>
-    <script src="/js/components/Form.js"></script>
-    <script src="/js/components/Dropdown.js"></script>
-    <script src="/js/components/Modal.js"></script>
-    <script src="/js/components/Notification.js"></script>
-    <script src="/js/components/CodeViewer.js"></script>
-    <script src="/js/components/ScreenshotViewer.js"></script>
-    <script src="/js/components/Navigation.js"></script>
-    
-    <!-- Views -->
-    <script src="/js/views/HomeView.js"></script>
-    <script src="/js/views/ScanView.js"></script>
-    <script src="/js/views/ResultsView.js"></script>
-    <script src="/js/views/ReportView.js"></script>
-    <script src="/js/views/SearchView.js"></script>
-    <script src="/js/views/SettingsView.js"></script>
-    <script src="/js/views/DbBrowserView.js"></script>
-    
-    <!-- Main app -->
-    <script src="/js/app.js"></script>
-    <script>
-      console.log('Loading Website Checker frontend...');
-      document.addEventListener('DOMContentLoaded', function() {
-        // Initialize the navigation component
-        const navigation = new Navigation();
-        navigation.init();
-        
-        // Initialize default view
-        const homeView = new HomeView();
-        homeView.render();
-        
-        // Set up routes
-        router.addRoute('/', function() {
-            const homeView = new HomeView();
-            homeView.render();
-        });
-        
-        router.addRoute('/scan', function() {
-            const scanView = new ScanView();
-            scanView.render();
-        });
-        
-        // Initialize router
-        router.handleRoute();
-      });
-    </script>
+    <!-- Scripts -->
+    <script type="module" src="/js/app.js"></script>
+
+    <!-- Fallback for JavaScript disabled -->
+    <noscript>
+        <div class="noscript-message">
+            <div class="container">
+                <h1>JavaScript Required</h1>
+                <p>We're sorry, but Website Checker requires JavaScript to work properly. Please enable JavaScript in your browser settings.</p>
+            </div>
+        </div>
+    </noscript>
 </body>
 </html>

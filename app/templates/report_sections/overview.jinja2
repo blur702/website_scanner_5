@@ -1,52 +1,169 @@
-<section id="overview-section" class="section">
-    <h2>Overview</h2>
-    
-    <div class="meta-info">
-        <div class="meta-grid">
-            <div class="meta-item">
-                <div class="meta-label">URL</div>
-                <div class="meta-value">{{ scan.original_url }}</div>
-            </div>
-            
-            <div class="meta-item">
-                <div class="meta-label">Scan Mode</div>
-                <div class="meta-value">{{ scan.scan_mode }}</div>
-            </div>
-            
-            <div class="meta-item">
-                <div class="meta-label">Start Time</div>
-                <div class="meta-value">{{ data.overview.start_time.strftime('%Y-%m-%d %H:%M:%S') }}</div>
-            </div>
-            
-            <div class="meta-item">
-                <div class="meta-label">End Time</div>
-                <div class="meta-value">{{ data.overview.end_time.strftime('%Y-%m-%d %H:%M:%S') if data.overview.end_time else 'In Progress' }}</div>
-            </div>
-            
-            <div class="meta-item">
-                <div class="meta-label">Duration</div>
-                <div class="meta-value">{{ data.overview.duration | round }}s</div>
-            </div>
-            
-            <div class="meta-item">
-                <div class="meta-label">Status</div>
-                <div class="meta-value">{{ scan.status }}</div>
-            </div>
+<div class="stats-grid">
+    <!-- Resource Statistics -->
+    <div class="stat-card">
+        <div class="stat-label">Total Resources</div>
+        <div class="stat-value">{{ resource_stats.total }}</div>
+        <div class="text-sm text-secondary">
+            {{ resource_stats.internal }} internal / {{ resource_stats.external }} external
         </div>
     </div>
-    
-    <div class="summary-grid">
-        <div class="summary-card">
-            <div class="summary-value">{{ data.overview.page_count }}</div>
-            <h3>Pages Processed</h3>
+
+    <div class="stat-card">
+        <div class="stat-label">HTML Pages</div>
+        <div class="stat-value">{{ resource_stats.by_type.get('html', 0) }}</div>
+        <div class="text-sm text-secondary">
+            Success rate: {{ ((resource_stats.by_status.get('ok', 0) / resource_stats.total) * 100) | round(1) }}%
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Assets</div>
+        <div class="stat-value">
+            {{ resource_stats.by_type.get('css', 0) + resource_stats.by_type.get('js', 0) + resource_stats.by_type.get('images', 0) }}
+        </div>
+        <div class="text-sm text-secondary">
+            CSS: {{ resource_stats.by_type.get('css', 0) }} |
+            JS: {{ resource_stats.by_type.get('js', 0) }} |
+            Images: {{ resource_stats.by_type.get('images', 0) }}
+        </div>
+    </div>
+
+    <!-- Validation Statistics -->
+    <div class="stat-card">
+        <div class="stat-label">Total Issues</div>
+        <div class="stat-value">{{ validation_stats.total }}</div>
+        <div class="text-sm text-secondary">
+            Critical: {{ validation_stats.by_severity.get('critical', 0) }} |
+            High: {{ validation_stats.by_severity.get('high', 0) }}
+        </div>
+    </div>
+</div>
+
+<div class="chart-grid">
+    <!-- Resource Types Distribution -->
+    <div class="chart-container">
+        <h3 class="text-secondary mb-4">Resource Types Distribution</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Count</th>
+                    <th>Percentage</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for type, count in resource_stats.by_type.items() %}
+                <tr>
+                    <td>{{ type|upper }}</td>
+                    <td>{{ count }}</td>
+                    <td>{{ ((count / resource_stats.total) * 100)|round(1) }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Issue Severity Distribution -->
+    <div class="chart-container">
+        <h3 class="text-secondary mb-4">Issues by Severity</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Severity</th>
+                    <th>Count</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for severity, count in validation_stats.by_severity.items() %}
+                <tr>
+                    <td>{{ severity|title }}</td>
+                    <td>{{ count }}</td>
+                    <td>
+                        <span class="badge {% if severity == 'critical' %}badge-error{% elif severity == 'high' %}badge-warning{% else %}badge-success{% endif %}">
+                            {{ severity|upper }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Download Status Summary -->
+<div class="section mt-4">
+    <div class="section-header">
+        <h3 class="section-title">Download Status</h3>
+    </div>
+    <div class="section-content">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Successful</div>
+                <div class="stat-value">{{ resource_stats.by_status.get('ok', 0) }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Failed</div>
+                <div class="stat-value">{{ resource_stats.by_status.get('error', 0) }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Skipped</div>
+                <div class="stat-value">{{ resource_stats.by_status.get('skipped', 0) }}</div>
+            </div>
         </div>
         
-        <div class="summary-card">
-            <div class="summary-value">{{ data.overview.resource_count }}</div>
-            <h3>Resources</h3>
+        <div class="table-container mt-4">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Count</th>
+                        <th>Percentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for status, count in resource_stats.by_status.items() %}
+                    <tr>
+                        <td>
+                            <span class="badge {% if status == 'ok' %}badge-success{% elif status == 'error' %}badge-error{% else %}badge-warning{% endif %}">
+                                {{ status|upper }}
+                            </span>
+                        </td>
+                        <td>{{ count }}</td>
+                        <td>{{ ((count / resource_stats.total) * 100)|round(1) }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-        
-        <div class="summary-card">
-            <div class="summary-value">{{ (data.overview.total_download_size / 1024 / 1024) | round(2) }}</div>
-            <h3>Total Size (MB)</h3>
+    </div>
+</div>
+
+<!-- Validation Summary -->
+<div class="section mt-4">
+    <div class="section-header">
+        <h3 class="section-title">Validation Summary</h3>
+    </div>
+    <div class="section-content">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Test Group</th>
+                        <th>Issues</th>
+                        <th>Distribution</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for group, count in validation_stats.by_group.items() %}
+                    <tr>
+                        <td>{{ group }}</td>
+                        <td>{{ count }}</td>
+                        <td>{{ ((count / validation_stats.total) * 100)|round(1) }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
+    </div>
+</div>

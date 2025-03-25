@@ -1,4 +1,5 @@
 import logging
+import os
 import uuid
 from datetime import datetime, date
 from typing import Dict, List, Any, Optional
@@ -12,8 +13,7 @@ from app.api.models.management import (
 from app.core.exceptions import NotFoundException, BadRequestException
 from app.models.metadata import Metadata
 from app.models.regex_filter import RegexFilter
-from app.api.models.scan import ScanStatus  # Use the enum from API models instead
-# If the module does not exist, create it or update the import path accordingly
+from app.models.scan_status import ScanStatus  # Updated import
 
 logger = logging.getLogger(__name__)
 
@@ -132,12 +132,7 @@ class ManagementService:
         )
     
     async def get_settings(self) -> SettingsResponse:
-        """
-        Get current system settings.
-        
-        Returns:
-            SettingsResponse with all settings
-        """
+        """Get current system settings."""
         logger.info("Getting system settings")
         
         # Format settings by module
@@ -147,7 +142,7 @@ class ManagementService:
             # Extract module name from key (format: module.setting)
             parts = setting_key.split('.', 1)
             if len(parts) != 2:
-                # Skip invalid keys
+                logger.warning(f"Invalid setting key format: {setting_key}")
                 continue
                 
             module_name, setting_name = parts

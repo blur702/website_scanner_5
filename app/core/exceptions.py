@@ -1,8 +1,8 @@
-from typing import Any, Dict, Optional
+from typing import Optional, Dict, Any
+from http import HTTPStatus
 
 class WebsiteCheckerException(Exception):
-    """Base exception for Website Checker application."""
-    status_code: int = 500
+    """Base exception class for Website Checker."""
     
     def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
         self.message = message
@@ -10,30 +10,164 @@ class WebsiteCheckerException(Exception):
         super().__init__(self.message)
 
 class NotFoundException(WebsiteCheckerException):
-    """Exception raised when a requested resource is not found."""
-    status_code = 404
+    """Raised when a requested resource is not found."""
     
-    def __init__(self, resource_type: str, resource_id: str, details: Optional[Dict[str, Any]] = None):
-        message = f"{resource_type} with ID '{resource_id}' not found"
-        super().__init__(message, details)
+    def __init__(self, resource_type: str, resource_id: str):
+        super().__init__(
+            message=f"{resource_type} with ID {resource_id} not found",
+            details={
+                "resource_type": resource_type,
+                "resource_id": resource_id,
+                "status_code": HTTPStatus.NOT_FOUND
+            }
+        )
 
 class BadRequestException(WebsiteCheckerException):
-    """Exception raised when the request is malformed or invalid."""
-    status_code = 400
+    """Raised when the request is malformed or invalid."""
+    
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+        super().__init__(
+            message=message,
+            details={
+                **(details or {}),
+                "status_code": HTTPStatus.BAD_REQUEST
+            }
+        )
 
 class ConflictException(WebsiteCheckerException):
-    """Exception raised when there's a conflict with the current state."""
-    status_code = 409
-
-class UnprocessableEntityException(WebsiteCheckerException):
-    """Exception raised when the request is well-formed but cannot be processed."""
-    status_code = 422
-
-class RateLimitException(WebsiteCheckerException):
-    """Exception raised when a rate limit is exceeded."""
-    status_code = 429
+    """Raised when there is a conflict with the current state."""
     
-    def __init__(self, limit: int, window: int, details: Optional[Dict[str, Any]] = None):
-        message = f"Rate limit exceeded: {limit} requests per {window} seconds"
-        details_with_limits = {"limit": limit, "window": window, **(details or {})}
-        super().__init__(message, details_with_limits)
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+        super().__init__(
+            message=message,
+            details={
+                **(details or {}),
+                "status_code": HTTPStatus.CONFLICT
+            }
+        )
+
+class ValidationException(WebsiteCheckerException):
+    """Raised when data validation fails."""
+    
+    def __init__(self, errors: Dict[str, str]):
+        super().__init__(
+            message="Validation error",
+            details={
+                "errors": errors,
+                "status_code": HTTPStatus.UNPROCESSABLE_ENTITY
+            }
+        )
+
+class CrawlerException(WebsiteCheckerException):
+    """Raised when there is an error during crawling."""
+    
+    def __init__(self, url: str, error: str, details: Optional[Dict[str, Any]] = None):
+        super().__init__(
+            message=f"Error crawling {url}: {error}",
+            details={
+                "url": url,
+                "error": error,
+                **(details or {}),
+                "status_code": HTTPStatus.INTERNAL_SERVER_ERROR
+            }
+        )
+
+class ScreenshotError(WebsiteCheckerException):
+    """Raised when there is an error capturing screenshots."""
+    
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+        super().__init__(
+            message=message,
+            details={
+                **(details or {}),
+                "status_code": HTTPStatus.INTERNAL_SERVER_ERROR
+            }
+        )
+
+class ConcurrencyError(WebsiteCheckerException):
+    """Raised when there is a concurrency or locking issue."""
+    
+    def __init__(self, resource_type: str, resource_id: str):
+        super().__init__(
+            message=f"{resource_type} {resource_id} is locked or in use",
+            details={
+                "resource_type": resource_type,
+                "resource_id": resource_id,
+                "status_code": HTTPStatus.LOCKED
+            }
+        )
+
+class StorageError(WebsiteCheckerException):
+    """Raised when there is an error with file storage operations."""
+    
+    def __init__(self, operation: str, path: str, error: str):
+        super().__init__(
+            message=f"Storage error during {operation}: {error}",
+            details={
+                "operation": operation,
+                "path": path,
+                "error": error,
+                "status_code": HTTPStatus.INTERNAL_SERVER_ERROR
+            }
+        )
+
+class ConfigurationError(WebsiteCheckerException):
+    """Raised when there is a configuration error."""
+    
+    def __init__(self, setting: str, error: str):
+        super().__init__(
+            message=f"Configuration error for {setting}: {error}",
+            details={
+                "setting": setting,
+                "error": error,
+                "status_code": HTTPStatus.INTERNAL_SERVER_ERROR
+            }
+        )
+
+class RateLimitExceeded(WebsiteCheckerException):
+    """Raised when rate limits are exceeded."""
+    
+    def __init__(self, resource: str, limit: int, reset_time: int):
+        super().__init__(
+            message=f"Rate limit exceeded for {resource}",
+            details={
+                "resource": resource,
+                "limit": limit,
+                "reset_time": reset_time,
+                "status_code": HTTPStatus.TOO_MANY_REQUESTS
+            }
+        )
+
+class DatabaseError(WebsiteCheckerException):
+    """Raised when there is a database error."""
+    
+    def __init__(self, operation: str, error: str):
+        super().__init__(
+            message=f"Database error during {operation}: {error}",
+            details={
+                "operation": operation,
+                "error": error,
+                "status_code": HTTPStatus.INTERNAL_SERVER_ERROR
+            }
+        )
+
+def handle_exception(exc: Exception) -> Dict[str, Any]:
+    """Convert an exception to a standardized error response format."""
+    if isinstance(exc, WebsiteCheckerException):
+        return {
+            "error": {
+                "type": exc.__class__.__name__,
+                "message": exc.message,
+                "details": exc.details,
+                "status_code": exc.details.get("status_code", HTTPStatus.INTERNAL_SERVER_ERROR)
+            }
+        }
+    else:
+        return {
+            "error": {
+                "type": "InternalServerError",
+                "message": str(exc),
+                "details": {},
+                "status_code": HTTPStatus.INTERNAL_SERVER_ERROR
+            }
+        }
