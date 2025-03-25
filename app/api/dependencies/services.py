@@ -1,47 +1,32 @@
+from typing import Generator
+from app.core.database import get_db
 from app.services.scan_service import ScanService
 from app.services.search_service import SearchService
 from app.services.regex_service import RegexService
 from app.services.management_service import ManagementService
 from app.services.db_browser_service import DbBrowserService
-from app.core.database import get_db
-from functools import lru_cache
 
-@lru_cache()
-def get_scan_service():
-    """
-    Get or create a ScanService instance.
-    Uses LRU cache to maintain singleton pattern.
-    """
-    return ScanService(get_db())
+def get_scan_service() -> Generator[ScanService, None, None]:
+    """Get ScanService instance with managed DB session"""
+    with get_db() as db:
+        yield ScanService(db)
 
-@lru_cache()
-def get_search_service():
-    """
-    Get or create a SearchService instance.
-    Uses LRU cache to maintain singleton pattern.
-    """
-    return SearchService(get_db())
+def get_search_service() -> Generator[SearchService, None, None]:
+    """Get SearchService instance with managed DB session"""
+    with get_db() as db:
+        yield SearchService(db)
 
-@lru_cache()
-def get_regex_service():
-    """
-    Get or create a RegexService instance.
-    Uses LRU cache to maintain singleton pattern.
-    """
-    return RegexService(get_db())
+def get_regex_service() -> Generator[RegexService, None, None]:
+    """Get RegexService instance with managed DB session"""
+    with get_db() as db:
+        yield RegexService(db)
 
-@lru_cache()
-def get_management_service():
-    """
-    Get or create a ManagementService instance.
-    Uses LRU cache to maintain singleton pattern.
-    """
-    return ManagementService(get_db())
+def get_management_service() -> Generator[ManagementService, None, None]:
+    """Get ManagementService instance with managed DB session"""
+    with get_db() as db:
+        yield ManagementService(db)
 
-@lru_cache()
-def get_db_browser_service():
-    """
-    Get or create a DbBrowserService instance.
-    Uses LRU cache to maintain singleton pattern.
-    """
-    return DbBrowserService(next(get_db()))
+def get_db_browser_service() -> Generator[DbBrowserService, None, None]:
+    """Get DbBrowserService instance with managed DB session"""
+    with get_db() as db:
+        yield DbBrowserService(db)

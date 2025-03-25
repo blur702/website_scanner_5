@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, Column, Integer
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 from contextlib import contextmanager
 import logging
 import os
@@ -36,6 +36,10 @@ def get_db():
     db = SessionLocal()
     try:
         yield db
+    except Exception as e:
+        logger.error(f"Database error: {str(e)}")
+        db.rollback()
+        raise
     finally:
         db.close()
 

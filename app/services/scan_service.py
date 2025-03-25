@@ -267,16 +267,39 @@ class ScanService:
         }
         self.db.commit()
 
-    async def _handle_scan_error(self, scan_id: str, error_message: str):
-        """Handle scan errors and update status."""
+    async def cleanup_scan(self, scan_id: str):
+        """Clean up resources after scan completion or failure"""
         try:
+            if scan_id in self.active_scans:
+                del self.active_scans[scan_id]
+            
+            # Clean up any temporary files
+            scan = self.db.query(Metadata).filter(Metadata.uuid == scan_id).first()
+            if scan and scan.cache_path:
+                if os.path.exists(scan.cache_path):
+                    shutil.rmtree(scan.cache_path)
+                    logger.info(f"Cleaned up cache directory for scan {scan_id}")
+        except Exception as e:
+            logger.error(f"Error cleaning up scan {scan_id}: {str(e)}")
+
+    async def _handle_scan_error(self, scan_id: str, error_message: str):
+        """Handle scan errors with proper cleanup"""
+        try:
+            # Update scan status
             scan = self.db.query(Metadata).filter(Metadata.uuid == scan_id).first()
             if scan:
                 scan.status = ScanStatus.FAILED.value
                 scan.error = error_message
                 scan.end_time = datetime.now()
                 self.db.commit()
+            
+            # Clean up resources
+            await self.cleanup_scan(scan_id)
+        
         except Exception as e:
-            logger.error(f"Error updating failed scan status: {str(e)}")
+            logger.error(f"Error handling scan failure: {str(e)}")
+            # Ensure active scan is removed even if update fails
+            if scan_id in self.active_scans:
+                del self.active_scans[scan_id]
 
     # Rest of the service methods (get_scan_status, get_scan_resources, etc.) remain unchanged

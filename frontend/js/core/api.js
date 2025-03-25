@@ -46,35 +46,24 @@ class ApiService {
      */
     async request(config) {
         const requestId = Math.random().toString(36).substr(2, 9);
-        const finalConfig = await this.applyRequestInterceptors({
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            credentials: 'same-origin',
-            timeout: this.options.timeout,
-            ...config,
-            url: this.options.baseURL + config.url
-        });
-
+        
         try {
-            // Add to pending requests
-            this.pendingRequests.set(requestId, { config: finalConfig, attempts: 0 });
-
+            // Add timeout handling
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), this.options.timeout);
 
-            const response = await fetch(finalConfig.url, {
-                ...finalConfig,
+            const response = await fetch(config.url, {
+                ...config,
                 signal: controller.signal
             });
             
             clearTimeout(timeout);
             this.pendingRequests.delete(requestId);
 
+            // Handle HTTP errors
             if (!response.ok) {
                 const error = await this.createError(response);
+                await this.handleRequestError(error, requestId);
                 throw error;
             }
 
@@ -82,7 +71,6 @@ class ApiService {
             return { data, status: response.status, headers: response.headers };
 
         } catch (error) {
-            // Handle network errors and timeouts explicitly
             if (error.name === 'AbortError') {
                 throw new Error('Request timed out');
             }

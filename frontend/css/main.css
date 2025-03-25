@@ -12,10 +12,9 @@
 html {
     font-size: 16px;
     height: 100%;
-    /* Text size adjust properties for maximum browser compatibility */
-    -webkit-text-size-adjust: 100%; /* Safari iOS < 9 */
-    -moz-text-size-adjust: 100%; /* Firefox < 89 */
-    /* text-size-adjust: 100%; Standard property for modern browsers */
+    /* Use only vendor prefixes since standard property isn't fully supported */
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
 }
 
 body {
