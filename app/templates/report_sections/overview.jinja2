@@ -167,3 +167,62 @@
         </div>
     </div>
 </div>
+
+<section class="overview-section">
+    <h2>Scan Overview</h2>
+    <div class="overview-grid">
+        <div class="overview-card">
+            <h3>Scan Details</h3>
+            <div class="details-list">
+                <div class="detail-item">
+                    <span class="detail-label">URL</span>
+                    <span class="detail-value">{{ metadata.url }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Mode</span>
+                    <span class="detail-value">{{ metadata.mode }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Duration</span>
+                    <span class="detail-value">{{ metadata.duration }} seconds</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="overview-card">
+            <h3>Resource Summary</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-value">{{ resource_stats.total }}</span>
+                    <span class="stat-label">Total Resources</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ resource_stats.by_type.HTML }}</span>
+                    <span class="stat-label">HTML Pages</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ resource_stats.by_status.ERROR }}</span>
+                    <span class="stat-label">Failed Resources</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="overview-card">
+            <h3>Validation Summary</h3>
+            <div class="stats-grid">
+                <div class="stat-item {{ 'has-issues' if validation_stats.by_severity.CRITICAL > 0 }}">
+                    <span class="stat-value">{{ validation_stats.by_severity.CRITICAL }}</span>
+                    <span class="stat-label">Critical Issues</span>
+                </div>
+                <div class="stat-item {{ 'has-issues' if validation_stats.by_severity.HIGH > 0 }}">
+                    <span class="stat-value">{{ validation_stats.by_severity.HIGH }}</span>
+                    <span class="stat-label">High Issues</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ validation_stats.total }}</span>
+                    <span class="stat-label">Total Issues</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

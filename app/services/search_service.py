@@ -6,13 +6,16 @@ import time
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
+from sqlalchemy import or_, and_
 
 from app.api.models.search import (
     SearchRequest, SearchResponse, SearchMatch, ContentType,
     ElementType, ElementMatch, ElementsResponse,
-    PatternType, PatternUsage, PatternResponse
+    PatternType, PatternUsage, PatternResponse, SearchResult
 )
 from app.core.exceptions import NotFoundException, ConflictException
+from app.models.search_index import SearchIndex
+from app.models.resource import Resource
 
 logger = logging.getLogger(__name__)
 
@@ -517,3 +520,105 @@ class SearchService:
             page=page,
             limit=limit
         )
+    
+    async def search(self, query: str, filters: Dict[str, Any] = None) -> SearchResponse:
+        """
+        Search indexed content with filters
+        """
+        try:
+            # Build base query
+            base_query = self.db.query(SearchIndex).\
+                join(Resource, SearchIndex.resource_id == Resource.id)
+            
+            # Apply text search
+            if query:
+                base_query = base_query.filter(
+                    or_(
+                        SearchIndex.element_value.ilike(f"%{query}%"),
+                        SearchIndex.context.ilike(f"%{query}%")
+                    )
+                )
+            
+            # Apply filters
+            if filters:
+                if filters.get('element_type'):
+                    base_query = base_query.filter(
+                        SearchIndex.element_type == filters['element_type']
+                    )
+                if filters.get('resource_type'):
+                    base_query = base_query.filter(
+                        Resource.resource_type == filters['resource_type']
+                    )
+                    
+            # Execute query
+            results = base_query.all()
+            
+            # Format results
+            search_results = []
+            for result in results:
+                search_results.append(SearchResult(
+                    resource_id=result.resource_id,
+                    element_type=result.element_type,
+                    element_value=result.element_value,
+                    context=result.context,
+                    location=result.location,
+                    url=result.resource.original_url
+                ))
+                
+            return SearchResponse(
+                query=query,
+                results=search_results,
+                total=len(search_results)
+            )
+            
+        except Exception as e:
+            logger.error(f"Search error: {str(e)}")
+            raise
+
+    async def index_content(self, resource: Resource) -> None:
+        """Index resource content for searching"""
+        try:
+            # Extract searchable content based on resource type
+            if resource.resource_type == ResourceType.HTML.value:
+                await self._index_html(resource)
+            elif resource.resource_type == ResourceType.CSS.value:
+                await self._index_css(resource)
+            elif resource.resource_type == ResourceType.JS.value:
+                await self._index_js(resource)
+                
+        except Exception as e:
+            logger.error(f"Error indexing content for {resource.original_url}: {str(e)}")
+
+    async def _index_html(self, resource: Resource) -> None:
+        """Index HTML content"""
+        from bs4 import BeautifulSoup
+        
+        soup = BeautifulSoup(resource.text_content, 'html.parser')
+        
+        # Index text content
+        for text_node in soup.stripped_strings:
+            text = text_node.strip()
+            if len(text) > 3:  # Skip very short text
+                self.db.add(SearchIndex(
+                    resource_id=resource.id,
+                    element_type='text',
+                    element_value=text,
+                    context=text
+                ))
+        
+        # Index elements with class/id
+        for element in soup.find_all(attrs={'class': True}):
+            self.db.add(SearchIndex(
+                resource_id=resource.id,
+                element_type='class',
+                element_value=' '.join(element.get('class')),
+                context=str(element)[:200]
+            ))
+            
+        for element in soup.find_all(attrs={'id': True}):
+            self.db.add(SearchIndex(
+                resource_id=resource.id,
+                element_type='id',
+                element_value=element.get('id'),
+                context=str(element)[:200]
+            ))

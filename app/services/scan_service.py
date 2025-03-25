@@ -8,6 +8,7 @@ import os
 import json
 import random
 from playwright.async_api import async_playwright
+import shutil
 
 from app.api.models.scan import (
     ScanCreate, ScanResponse, ScanStatusResponse, ResourcesResponse,
@@ -302,4 +303,57 @@ class ScanService:
             if scan_id in self.active_scans:
                 del self.active_scans[scan_id]
 
-    # Rest of the service methods (get_scan_status, get_scan_resources, etc.) remain unchanged
+    async def _validate_content(self, resource: Resource) -> List[ValidationIssue]:
+        """Validate HTML/CSS content and identify issues"""
+        validation_issues = []
+        try:
+            if resource.resource_type == ResourceType.HTML.value:
+                validation_issues.extend(await self._validate_html(resource))
+            elif resource.resource_type == ResourceType.CSS.value:
+                validation_issues.extend(await self._validate_css(resource))
+                
+            return validation_issues
+        except Exception as e:
+            logger.error(f"Validation error for {resource.original_url}: {str(e)}")
+            return []
+
+    async def cancel_scan(self, scan_id: str) -> bool:
+        """Cancel an active scan"""
+        async with self._lock:
+            if scan_id not in self.active_scans:
+                return False
+            
+            try:
+                # Update scan status
+                scan = self.db.query(Metadata).filter(Metadata.uuid == scan_id).first()
+                if scan:
+                    scan.status = ScanStatus.CANCELLED.value
+                    scan.end_time = datetime.now()
+                    self.db.commit()
+                
+                # Clean up resources
+                await self.cleanup_scan(scan_id)
+                return True
+                
+            except Exception as e:
+                logger.error(f"Error cancelling scan {scan_id}: {str(e)}")
+                return False
+
+    async def get_scan_status(self, scan_id: str) -> ScanStatusResponse:
+        """Get current scan status"""
+        scan = self.db.query(Metadata).filter(Metadata.uuid == scan_id).first()
+        if not scan:
+            raise NotFoundException(f"Scan {scan_id} not found")
+        
+        return ScanStatusResponse(
+            uuid=scan.uuid,
+            status=scan.status,
+            progress=scan.progress,
+            current_activity=scan.current_activity,
+            error=scan.error,
+            stats=scan.stats or {},
+            start_time=scan.start_time,
+            end_time=scan.end_time
+        )
+
+    # Rest of the service methods (get_scan_resources, etc.) remain unchanged

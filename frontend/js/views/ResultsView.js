@@ -1,10 +1,10 @@
 // ResultsView.js - Display scan results with real-time updates
 class ResultsView {
-    constructor() {
-        this.container = document.getElementById('app');
-        this.scanId = null;
+    constructor(scanId) {
+        this.container = document.getElementById('view-container');
+        this.scanId = scanId;
         this.currentTab = 'overview';
-        this.updateInterval = null;
+        this.refreshInterval = null;
         this.data = {
             status: null,
             resources: [],
@@ -22,48 +22,74 @@ class ResultsView {
 
     async render() {
         this.container.innerHTML = `
-            <div class="scan-results">
-                <header class="results-header">
-                    <div class="status-bar">
-                        <div class="status-indicator ${this.data.status?.toLowerCase() || 'running'}">
-                            <span class="status-dot"></span>
-                            <span class="status-text">${this.data.status || 'Running'}</span>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress" style="width: ${this.data.progress || 0}%"></div>
-                        </div>
-                        <div class="status-details">
-                            <span class="current-activity">${this.data.currentActivity || 'Initializing...'}</span>
-                        </div>
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="card-title">Scan Results</h1>
+                    <div class="scan-status" id="scan-status">Loading...</div>
+                </div>
+                <div class="card-body">
+                    <div class="tabs">
+                        <button class="tab active" data-tab="overview">Overview</button>
+                        <button class="tab" data-tab="resources">Resources</button>
+                        <button class="tab" data-tab="issues">Issues</button>
+                        <button class="tab" data-tab="screenshots">Screenshots</button>
                     </div>
-                    <div class="actions">
-                        <button id="export-report" class="btn btn-outline">
-                            <i class="icon-download"></i> Export Report
-                        </button>
-                        <button id="take-screenshot" class="btn btn-outline">
-                            <i class="icon-camera"></i> Screenshot
-                        </button>
-                    </div>
-                </header>
-
-                <nav class="results-tabs">
-                    <button class="tab-button ${this.currentTab === 'overview' ? 'active' : ''}" 
-                            data-tab="overview">Overview</button>
-                    <button class="tab-button ${this.currentTab === 'resources' ? 'active' : ''}" 
-                            data-tab="resources">Resources</button>
-                    <button class="tab-button ${this.currentTab === 'validation' ? 'active' : ''}" 
-                            data-tab="validation">Validation</button>
-                    <button class="tab-button ${this.currentTab === 'screenshots' ? 'active' : ''}" 
-                            data-tab="screenshots">Screenshots</button>
-                    <button class="tab-button ${this.currentTab === 'search' ? 'active' : ''}" 
-                            data-tab="search">Search</button>
-                </nav>
-
-                <main class="results-content">
-                    ${this.renderCurrentTab()}
-                </main>
+                    <div id="tab-content"></div>
+                </div>
             </div>
         `;
+
+        this.setupEventListeners();
+        await this.loadScanStatus();
+        await this.showTab('overview');
+
+        // Start status refresh for active scans
+        this.startStatusRefresh();
+    }
+
+    async loadScanStatus() {
+        try {
+            const status = await api.get(`/scan/${this.scanId}/status`);
+            this.updateStatusDisplay(status);
+        } catch (error) {
+            Notification.show('Error loading scan status', 'error');
+        }
+    }
+
+    updateStatusDisplay(status) {
+        const statusEl = document.getElementById('scan-status');
+        if (!statusEl) return;
+
+        const statusClass = {
+            'running': 'status-running',
+            'completed': 'status-success',
+            'failed': 'status-error'
+        }[status.status] || '';
+
+        statusEl.innerHTML = `
+            <div class="scan-status-badge ${statusClass}">
+                ${status.status.toUpperCase()}
+            </div>
+            <div class="scan-progress">
+                <div class="progress">
+                    <div class="progress-bar" style="width: ${status.progress}%"></div>
+                </div>
+                <div class="progress-text">${status.current_activity || ''}</div>
+            </div>
+        `;
+    }
+
+    startStatusRefresh() {
+        this.refreshInterval = setInterval(() => {
+            this.loadScanStatus();
+        }, 5000);
+    }
+
+    stopStatusRefresh() {
+        if (this.refreshInterval) {
+            clearInterval(this.refreshInterval);
+            this.refreshInterval = null;
+        }
     }
 
     renderCurrentTab() {

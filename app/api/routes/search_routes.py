@@ -9,8 +9,7 @@ from app.api.models.search import (
 from app.services.search_service import SearchService
 from app.api.dependencies.services import get_search_service
 from app.core.exceptions import (
-    WebsiteCheckerException, NotFoundException, ConflictException,
-    BadRequestException, UnprocessableEntityException
+    WebsiteCheckerException, NotFoundException, ConflictException, BadRequestException, UnprocessableEntityException
 )
 
 logger = logging.getLogger(__name__)
@@ -201,3 +200,49 @@ async def analyze_patterns(
     except Exception as e:
         logger.error(f"Unexpected error analyzing patterns: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import Optional
+import logging
+
+from app.api.models.search import (
+    SearchRequest, SearchResponse, ElementsResponse, PatternResponse,
+    ElementType, PatternType
+)
+from app.services.search_service import SearchService
+from app.api.dependencies.services import get_search_service
+from app.core.exceptions import NotFoundException, ConflictException
+
+router = APIRouter(prefix="/search", tags=["Search"])
+logger = logging.getLogger(__name__)
+
+@router.post("/{scan_id}", response_model=SearchResponse)
+async def search_content(
+    scan_id: str,
+    search_request: SearchRequest,
+    search_service: SearchService = Depends(get_search_service)
+):
+    """Search scan content with filters"""
+    try:
+        return await search_service.search_content(scan_id, search_request)
+    except Exception as e:
+        logger.error(f"Search error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/elements/{scan_id}", response_model=ElementsResponse)
+async def find_elements(
+    scan_id: str,
+    element_type: ElementType,
+    value: str,
+    page: int = Query(1, ge=1),
+    limit: int = Query(50, ge=1, le=100),
+    search_service: SearchService = Depends(get_search_service)
+):
+    """Find elements by class or ID"""
+    try:
+        return await search_service.find_elements(
+            scan_id, element_type, value, page, limit
+        )
+    except Exception as e:
+        logger.error(f"Element search error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))

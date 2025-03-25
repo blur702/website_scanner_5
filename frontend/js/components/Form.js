@@ -5,329 +5,159 @@
 class Form {
     constructor(options = {}) {
         this.options = {
-            formId: null,
-            fields: {},
-            validations: {},
+            form: null,
             onSubmit: null,
-            onChange: null,
+            onValidate: null,
             onError: null,
-            validateOnChange: true,
-            validateOnBlur: true,
-            resetOnSubmit: false,
+            autoValidate: true,
             ...options
         };
 
-        this.form = null;
-        this.fields = {};
-        this.errors = {};
-        this.isSubmitting = false;
-        this.isValid = true;
-
+        this.form = this.options.form;
         this.init();
     }
 
     init() {
-        if (this.options.formId) {
-            this.form = document.getElementById(this.options.formId);
-            if (!this.form) {
-                throw new Error(`Form with id "${this.options.formId}" not found`);
-            }
+        if (!this.form) {
+            throw new Error('Form element is required');
         }
 
-        this.initializeFields();
         this.setupEventListeners();
-    }
-
-    initializeFields() {
-        // Initialize field values and state
-        Object.entries(this.options.fields).forEach(([name, config]) => {
-            const element = this.form ? this.form.elements[name] : null;
-            
-            this.fields[name] = {
-                value: config.value || '',
-                element,
-                touched: false,
-                dirty: false,
-                config
-            };
-        });
+        if (this.options.autoValidate) {
+            this.setupValidation();
+        }
     }
 
     setupEventListeners() {
-        if (!this.form) return;
-
-        // Form submit
-        this.form.addEventListener('submit', (e) => {
+        this.form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            this.handleSubmit();
+            if (await this.validate()) {
+                await this.submit();
+            }
         });
 
-        // Field events
-        Object.keys(this.fields).forEach(name => {
-            const element = this.fields[name].element;
-            if (!element) return;
+        // Handle form reset
+        this.form.addEventListener('reset', () => {
+            this.clearErrors();
+        });
+    }
 
-            // Change events
-            element.addEventListener('input', () => {
-                this.handleFieldChange(name);
-            });
-
-            element.addEventListener('change', () => {
-                this.handleFieldChange(name);
-            });
-
-            // Blur events
-            element.addEventListener('blur', () => {
-                this.handleFieldBlur(name);
+    setupValidation() {
+        const inputs = this.form.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            input.addEventListener('blur', () => {
+                this.validateField(input);
             });
         });
     }
 
-    async handleSubmit() {
-        if (this.isSubmitting) return;
-
-        this.isSubmitting = true;
+    async validate() {
         this.clearErrors();
+        let isValid = true;
 
-        try {
-            // Validate all fields
-            const isValid = await this.validateAll();
-            if (!isValid) {
-                this.handleValidationErrors();
-                return;
+        // Run custom validation if provided
+        if (this.options.onValidate) {
+            const customValidation = await this.options.onValidate(this.getFormData());
+            if (!customValidation.valid) {
+                this.showErrors(customValidation.errors);
+                isValid = false;
             }
-
-            // Call onSubmit callback with form data
-            if (this.options.onSubmit) {
-                const formData = this.getValues();
-                await this.options.onSubmit(formData, this);
-            }
-
-            // Reset form if configured
-            if (this.options.resetOnSubmit) {
-                this.reset();
-            }
-
-        } catch (error) {
-            console.error('Form submission error:', error);
-            if (this.options.onError) {
-                this.options.onError(error, this);
-            }
-        } finally {
-            this.isSubmitting = false;
-        }
-    }
-
-    handleFieldChange(name) {
-        const field = this.fields[name];
-        if (!field) return;
-
-        // Update field value
-        field.value = this.getFieldValue(field.element);
-        field.dirty = true;
-
-        // Validate if configured
-        if (this.options.validateOnChange) {
-            this.validateField(name);
         }
 
-        // Trigger onChange callback
-        if (this.options.onChange) {
-            this.options.onChange(name, field.value, this);
-        }
-    }
-
-    handleFieldBlur(name) {
-        const field = this.fields[name];
-        if (!field) return;
-
-        field.touched = true;
-
-        // Validate if configured
-        if (this.options.validateOnBlur) {
-            this.validateField(name);
-        }
-    }
-
-    async validateField(name) {
-        const field = this.fields[name];
-        const validations = this.options.validations[name] || [];
-
-        this.clearFieldError(name);
-
-        for (const validation of validations) {
-            try {
-                const result = await validation(field.value, this.getValues());
-                if (result !== true) {
-                    this.setFieldError(name, result);
-                    return false;
+        // Run HTML5 validation
+        if (!this.form.checkValidity()) {
+            const inputs = this.form.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                if (!input.validity.valid) {
+                    this.showFieldError(input, input.validationMessage);
                 }
-            } catch (error) {
-                this.setFieldError(name, error.message);
-                return false;
-            }
+            });
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    validateField(field) {
+        this.clearFieldError(field);
+
+        if (!field.validity.valid) {
+            this.showFieldError(field, field.validationMessage);
+            return false;
         }
 
         return true;
     }
 
-    async validateAll() {
-        const validations = await Promise.all(
-            Object.keys(this.fields).map(name => this.validateField(name))
-        );
-
-        this.isValid = validations.every(isValid => isValid);
-        return this.isValid;
-    }
-
-    handleValidationErrors() {
-        // Focus first field with error
-        const firstErrorField = Object.entries(this.errors)[0];
-        if (firstErrorField) {
-            const [name] = firstErrorField;
-            const element = this.fields[name].element;
-            if (element) {
-                element.focus();
+    async submit() {
+        try {
+            if (this.options.onSubmit) {
+                const formData = this.getFormData();
+                await this.options.onSubmit(formData);
             }
-        }
-
-        // Call onError callback
-        if (this.options.onError) {
-            this.options.onError(this.errors, this);
+        } catch (error) {
+            if (this.options.onError) {
+                this.options.onError(error);
+            }
+            this.showErrors({ form: error.message });
         }
     }
 
-    setFieldError(name, message) {
-        this.errors[name] = message;
-        this.updateFieldUI(name);
+    getFormData() {
+        const formData = new FormData(this.form);
+        return Object.fromEntries(formData.entries());
     }
 
-    clearFieldError(name) {
-        delete this.errors[name];
-        this.updateFieldUI(name);
+    showErrors(errors) {
+        Object.entries(errors).forEach(([field, message]) => {
+            const input = this.form.querySelector(`[name="${field}"]`);
+            if (input) {
+                this.showFieldError(input, message);
+            } else if (field === 'form') {
+                this.showFormError(message);
+            }
+        });
+    }
+
+    showFieldError(field, message) {
+        field.classList.add('error');
+        const errorElement = document.createElement('div');
+        errorElement.className = 'form-error';
+        errorElement.textContent = message;
+        field.parentNode.appendChild(errorElement);
+    }
+
+    showFormError(message) {
+        const errorElement = document.createElement('div');
+        errorElement.className = 'form-error form-error-summary';
+        errorElement.textContent = message;
+        this.form.insertBefore(errorElement, this.form.firstChild);
     }
 
     clearErrors() {
-        this.errors = {};
-        Object.keys(this.fields).forEach(name => {
-            this.updateFieldUI(name);
+        this.form.querySelectorAll('.form-error').forEach(error => error.remove());
+        this.form.querySelectorAll('.error').forEach(field => {
+            field.classList.remove('error');
         });
     }
 
-    updateFieldUI(name) {
-        const field = this.fields[name];
-        if (!field.element) return;
-
-        const hasError = name in this.errors;
-        
-        // Update element classes
-        field.element.classList.toggle('is-invalid', hasError);
-        field.element.classList.toggle('is-valid', field.touched && !hasError);
-
-        // Update or remove error message
-        const container = field.element.closest('.form-group');
-        if (container) {
-            let errorElement = container.querySelector('.form-error');
-            
-            if (hasError) {
-                if (!errorElement) {
-                    errorElement = document.createElement('div');
-                    errorElement.className = 'form-error';
-                    container.appendChild(errorElement);
-                }
-                errorElement.textContent = this.errors[name];
-            } else if (errorElement) {
-                errorElement.remove();
-            }
+    clearFieldError(field) {
+        const errorElement = field.parentNode.querySelector('.form-error');
+        if (errorElement) {
+            errorElement.remove();
         }
-    }
-
-    getFieldValue(element) {
-        if (!element) return '';
-
-        if (element.type === 'checkbox') {
-            return element.checked;
-        }
-
-        if (element.type === 'radio') {
-            const checked = this.form.querySelector(`input[name="${element.name}"]:checked`);
-            return checked ? checked.value : '';
-        }
-
-        if (element.type === 'select-multiple') {
-            return Array.from(element.selectedOptions).map(option => option.value);
-        }
-
-        return element.value;
-    }
-
-    setFieldValue(name, value) {
-        const field = this.fields[name];
-        if (!field || !field.element) return;
-
-        if (field.element.type === 'checkbox') {
-            field.element.checked = Boolean(value);
-        } else if (field.element.type === 'radio') {
-            const radio = this.form.querySelector(`input[name="${name}"][value="${value}"]`);
-            if (radio) {
-                radio.checked = true;
-            }
-        } else if (field.element.type === 'select-multiple') {
-            const values = Array.isArray(value) ? value : [value];
-            Array.from(field.element.options).forEach(option => {
-                option.selected = values.includes(option.value);
-            });
-        } else {
-            field.element.value = value;
-        }
-
-        field.value = value;
-        this.handleFieldChange(name);
-    }
-
-    getValues() {
-        return Object.entries(this.fields).reduce((values, [name, field]) => {
-            values[name] = field.value;
-            return values;
-        }, {});
-    }
-
-    setValues(values) {
-        Object.entries(values).forEach(([name, value]) => {
-            this.setFieldValue(name, value);
-        });
+        field.classList.remove('error');
     }
 
     reset() {
-        if (this.form) {
-            this.form.reset();
-        }
-
-        Object.keys(this.fields).forEach(name => {
-            const field = this.fields[name];
-            field.value = field.config.value || '';
-            field.touched = false;
-            field.dirty = false;
-        });
-
+        this.form.reset();
         this.clearErrors();
     }
 
     destroy() {
-        if (this.form) {
-            // Remove event listeners
-            this.form.removeEventListener('submit', this.handleSubmit);
-            
-            Object.values(this.fields).forEach(field => {
-                if (field.element) {
-                    field.element.removeEventListener('input', this.handleFieldChange);
-                    field.element.removeEventListener('change', this.handleFieldChange);
-                    field.element.removeEventListener('blur', this.handleFieldBlur);
-                }
-            });
-        }
+        // Cleanup event listeners if needed
+        this.form = null;
     }
 }
 
-// Export for module use
 export default Form;

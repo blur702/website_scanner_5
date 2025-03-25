@@ -437,4 +437,59 @@ async def download_package(
         raise handle_website_checker_exception(e)
     except Exception as e:
         logger.error(f"Unexpected error downloading package: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)})
+
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query
+from typing import Optional
+import logging
+
+from app.api.models.scan import ScanCreate, ScanResponse, ScanStatusResponse
+from app.services.scan_service import ScanService
+from app.api.dependencies.services import get_scan_service
+from app.core.exceptions import NotFoundException, BadRequestException
+
+router = APIRouter(prefix="/scan", tags=["Scans"])
+logger = logging.getLogger(__name__)
+
+@router.post("/", response_model=ScanResponse)
+async def create_scan(
+    scan_data: ScanCreate,
+    background_tasks: BackgroundTasks,
+    scan_service: ScanService = Depends(get_scan_service)
+):
+    """Start a new website scan"""
+    try:
+        scan_id = await scan_service.start_scan(scan_data)
+        return ScanResponse(scan_id=scan_id, status="started")
+    except Exception as e:
+        logger.error(f"Error starting scan: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/{scan_id}/status", response_model=ScanStatusResponse)
+async def get_scan_status(
+    scan_id: str,
+    scan_service: ScanService = Depends(get_scan_service)
+):
+    """Get current scan status"""
+    try:
+        return await scan_service.get_scan_status(scan_id)
+    except NotFoundException as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error getting scan status: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/{scan_id}")
+async def cancel_scan(
+    scan_id: str,
+    scan_service: ScanService = Depends(get_scan_service)
+):
+    """Cancel an active scan"""
+    try:
+        success = await scan_service.cancel_scan(scan_id)
+        if success:
+            return {"message": "Scan cancelled successfully"}
+        raise HTTPException(status_code=400, detail="Scan not running")
+    except Exception as e:
+        logger.error(f"Error cancelling scan: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))

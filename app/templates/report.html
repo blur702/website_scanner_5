@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan Report - {{ scan_info.url }}</title>
+    <style>
+        /* Add report styles here */
+        :root {
+            --color-primary: #4a5568;
+            --color-secondary: #718096;
+            --color-success: #48bb78;
+            --color-warning: #ed8936;
+            --color-error: #f56565;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            line-height: 1.5;
+            margin: 0;
+            padding: 2rem;
+        }
+
+        .report-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            padding: 1rem;
+            background: #fff;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* Add more styles as needed */
+    </style>
+</head>
+<body>
+    <div class="report-header">
+        <h1>Website Scan Report</h1>
+        <div class="scan-info">
+            <p><strong>URL:</strong> {{ scan_info.url }}</p>
+            <p><strong>Scan ID:</strong> {{ scan_info.id }}</p>
+            <p><strong>Started:</strong> {{ scan_info.start_time }}</p>
+            <p><strong>Duration:</strong> {{ scan_info.duration }} seconds</p>
+        </div>
+    </div>
+
+    <div class="report-body">
+        <!-- Statistics Section -->
+        <section class="stats-section">
+            <h2>Statistics</h2>
+            <div class="stats-grid">
+                <!-- Resource Stats -->
+                <div class="stat-card">
+                    <h3>Resources</h3>
+                    <ul>
+                        <li>Total Pages: {{ statistics.pages }}</li>
+                        <li>Total Resources: {{ statistics.resources.total }}</li>
+                        <li>Downloaded: {{ statistics.resources.downloaded }}</li>
+                    </ul>
+                </div>
+
+                <!-- Issues Stats -->
+                <div class="stat-card">
+                    <h3>Issues</h3>
+                    <ul>
+                        <li>Critical: {{ statistics.issues.critical }}</li>
+                        <li>High: {{ statistics.issues.high }}</li>
+                        <li>Medium: {{ statistics.issues.medium }}</li>
+                        <li>Low: {{ statistics.issues.low }}</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Additional sections rendered conditionally -->
+        {% if resources %}
+        <section class="resources-section">
+            <!-- Resources details -->
+        </section>
+        {% endif %}
+
+        {% if validation %}
+        <section class="validation-section">
+            <!-- Validation issues -->
+        </section>
+        {% endif %}
+
+        {% if performance %}
+        <section class="performance-section">
+            <!-- Performance metrics -->
+        </section>
+        {% endif %}
+    </div>
+
+    <footer class="report-footer">
+        <p>Generated on {{ generated_at }}</p>
+    </footer>
+</body>
+</html>

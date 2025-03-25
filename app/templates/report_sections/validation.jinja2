@@ -1,0 +1,45 @@
+<section class="validation-section">
+    <h2>Validation Results</h2>
+    
+    <div class="validation-summary">
+        <div class="summary-grid">
+            {% for severity, count in stats.by_severity.items() %}
+            <div class="severity-card {{ severity.lower() }}">
+                <span class="severity-count">{{ count }}</span>
+                <span class="severity-label">{{ severity.title() }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="validation-issues">
+        {% for issue in issues %}
+        <div class="issue-card {{ issue.severity.lower() }}">
+            <div class="issue-header">
+                <span class="severity-badge">{{ issue.severity }}</span>
+                <h3 class="issue-title">{{ issue.message }}</h3>
+            </div>
+            
+            <div class="issue-details">
+                <div class="issue-location">
+                    <span class="location-file">{{ issue.file }}</span>
+                    <span class="location-line">Line {{ issue.line }}</span>
+                </div>
+                
+                {% if issue.code %}
+                <div class="issue-code">
+                    <pre><code>{{ issue.code }}</code></pre>
+                </div>
+                {% endif %}
+                
+                {% if issue.recommendation %}
+                <div class="issue-recommendation">
+                    <h4>Recommendation</h4>
+                    <p>{{ issue.recommendation }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
